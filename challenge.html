@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Equation Chicken · Challenge</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="game-state.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -15,8 +16,8 @@
         <h1>Equation Chicken</h1>
       </div>
       <div class="scoreboard" aria-label="Current score">
-        <div><span class="eyebrow">Player 1</span><strong>2</strong></div>
-        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+        <div><span class="eyebrow">Player 1</span><strong data-score-player="1">0</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong data-score-player="2">0</strong></div>
       </div>
     </header>
 
@@ -34,7 +35,8 @@
           <div id="drawing-board" class="graph" role="img" aria-label="Coordinate grid for drawing a graph">
             <span class="axis-x"></span><span class="axis-y"></span>
             <span class="axis-label x">x</span><span class="axis-label y">y</span>
-            <span class="line" aria-hidden="true"></span>
+            <canvas id="drawing-canvas" class="drawing-canvas" aria-label="Drawing canvas"></canvas>
+            <span id="reference-line" class="line" aria-hidden="true" hidden></span>
             <span id="frozen-label" class="frozen-label" hidden>Drawing submitted · frozen for judgment</span>
           </div>
         </div>
@@ -42,20 +44,25 @@
         <div class="graph-footer">
           <span id="graph-hint" class="hint">Reference graph is hidden until judgment.</span>
           <div id="draw-actions" class="actions">
-            <button class="action" type="button">Clear</button>
+            <button class="action" type="button" data-action="clear-drawing">Clear</button>
             <button class="action primary" type="button" data-action="submit-drawing">Submit drawing</button>
-            <a class="action" href="result.html">Forfeit</a>
+            <button class="action" type="button" data-action="forfeit">Forfeit</button>
           </div>
         </div>
 
         <div id="judge-actions" class="follow-up" hidden>
           <div><div class="eyebrow">Judgment</div><h2>Player 1: how was the drawing?</h2></div>
-          <div class="actions"><a class="action primary" href="result.html">Drawing is good</a><button class="action" type="button" data-action="reject-drawing">Drawing is bad</button></div>
+          <div class="actions"><button class="action primary" type="button" data-action="accept-drawing">Drawing is good</button><button class="action" type="button" data-action="reject-drawing">Drawing is bad</button></div>
         </div>
 
         <div id="reject-actions" class="follow-up rejection" hidden>
           <div><div class="eyebrow">Rejected drawing</div><h2>Player 2 chooses the next step</h2><p class="hint">Accept the loss or counter-challenge Player 1.</p></div>
-          <div class="actions"><a class="action" href="result.html">Accept loss</a><button class="action primary" type="button" data-action="counter-challenge">Counter-challenge</button></div>
+          <div class="actions"><button class="action" type="button" data-action="accept-loss">Accept loss</button><button class="action primary" type="button" data-action="counter-challenge">Counter-challenge</button></div>
+        </div>
+
+        <div id="accepted-actions" class="follow-up" hidden>
+          <div><div class="eyebrow">Reference revealed</div><h2>The drawing was accepted.</h2><p class="hint">The computer reference is now visible.</p></div>
+          <div class="actions"><a class="action primary" href="result.html" data-action="complete-accepted">View result</a></div>
         </div>
       </section>
     </main>

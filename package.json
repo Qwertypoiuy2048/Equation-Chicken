@@ -1,0 +1,7 @@
+{
+  "name": "equation-chicken",
+  "private": true,
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.js"
+  }
+}

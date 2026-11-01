@@ -136,6 +136,8 @@ The computer graph is a reference tool. It should remain hidden until the curren
 
 The basic page prototype is split into [index.html](index.html), [challenge.html](challenge.html), and [result.html](result.html), with shared behavior in [script.js](script.js) and shared styling in [styles.css](styles.css). The original interactive wireframe remains available in [wireframe.html](wireframe.html). The testing strategy and first test cases are tracked in [TEST_PLAN.md](TEST_PLAN.md).
 
+Run the automated checks with `npm test`.
+
 The first interface can be built from three primary screens, with judgment embedded in the graphing screen.
 
 ### 1. Turn screen

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Equation Chicken · Result</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="game-state.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -15,8 +16,8 @@
         <h1>Equation Chicken</h1>
       </div>
       <div class="scoreboard" aria-label="Current score">
-        <div><span class="eyebrow">Player 1</span><strong>3</strong></div>
-        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+        <div><span class="eyebrow">Player 1</span><strong data-score-player="1">0</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong data-score-player="2">0</strong></div>
       </div>
     </header>
 
@@ -29,10 +30,10 @@
     <main>
       <section class="panel result">
         <div class="eyebrow">Match result</div>
-        <h2>Player 1 wins!</h2>
-        <p>Score: Player 1 <strong>3</strong> · Player 2 <strong>1</strong></p>
-        <p class="hint">Next starting player: Player 2</p>
-        <div class="result-actions"><a class="action primary" href="index.html">Next match</a></div>
+        <h2><span data-winner-name>Player 1</span> wins!</h2>
+        <p>Score: Player 1 <strong data-score-player="1">0</strong> · Player 2 <strong data-score-player="2">0</strong></p>
+        <p class="hint">Next starting player: <span data-next-player-name>Player 1</span></p>
+        <div class="result-actions"><a class="action primary" href="index.html" data-action="next-match">Next match</a></div>
       </section>
     </main>
   </div>

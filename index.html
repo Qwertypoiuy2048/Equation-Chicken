@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Equation Chicken · Your Turn</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="game-state.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -15,8 +16,8 @@
         <h1>Equation Chicken</h1>
       </div>
       <div class="scoreboard" aria-label="Current score">
-        <div><span class="eyebrow">Player 1</span><strong>2</strong></div>
-        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+        <div><span class="eyebrow">Player 1</span><strong data-score-player="1">0</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong data-score-player="2">0</strong></div>
       </div>
     </header>
 
@@ -29,13 +30,13 @@
     <main>
       <section class="panel">
         <div class="turn-header">
-          <div><div class="eyebrow">Match 3</div><h2>Player 1's turn</h2></div>
+          <div><div class="eyebrow">Match <span data-match-number>1</span></div><h2><span data-current-player-name>Player 1</span>'s turn</h2></div>
           <div class="eyebrow">Removals remaining: P1 2 · P2 1</div>
         </div>
         <div class="meta"><span>Valid graphable equation</span><span>One action per turn</span></div>
         <div class="equation" aria-label="Current equation">y = 2x + 3</div>
         <p class="banned"><strong>Banned this match:</strong> 4, ^</p>
-        <div class="actions"><button class="action" type="button">Alter equation</button><a class="action primary" href="challenge.html">Challenge Player 2</a></div>
+        <div class="actions"><button class="action" type="button" disabled>Alter equation</button><a class="action primary" href="challenge.html" data-action="start-challenge">Challenge the other player</a></div>
         <p class="history"><strong>Equation history:</strong> y = x → y = 2x → y = 2x + 3</p>
       </section>
     </main>

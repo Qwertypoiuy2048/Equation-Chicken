@@ -6,12 +6,18 @@
     --panel: #ffffff;
     --canvas: #f3f5f7;
     --accent: #244b74;
+    --counter-drawing: #b86b1f;
+    --reference: #2a8f52;
     --accent-soft: #e7eef6;
     --danger: #8a3030;
 }
 
 * {
     box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
 }
 
 body {
@@ -208,6 +214,20 @@ main {
     background-size: 32px 32px;
 }
 
+.drawing-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.graph.is-frozen .drawing-canvas {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .axis-x,
 .axis-y {
     position: absolute;
@@ -234,7 +254,7 @@ main {
     width: 80%;
     left: 10%;
     top: 42%;
-    background: var(--accent);
+    background: var(--reference);
     transform: rotate(-18deg);
     transform-origin: center;
 }
