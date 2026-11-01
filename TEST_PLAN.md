@@ -5,6 +5,14 @@ This project has two kinds of behavior to protect:
 1. **Game rules**, which should be deterministic and easy to test without a browser.
 2. **Interaction flow**, including p5.js drawing input and screen transitions.
 
+The initial automated suite is now available under `tests/` and runs with:
+
+```text
+npm test
+```
+
+It currently covers the game-state transitions, scoring/reset behavior, required page assets and controls, and the shared browser-script contract.
+
 ## Recommended framework
 
 Use **Vitest** for the game engine, tokenizer/parser, equation alterations, scoring, and reset logic. Add **Playwright** once the first playable browser build exists for a small number of end-to-end smoke tests.
@@ -51,9 +59,13 @@ tests/
 ### Browser smoke tests
 
 - The turn screen exposes the equation, active player, score, removals, banned tokens, and two main actions.
+- Navigating between the three pages preserves the shared game state.
 - Challenge → graphing → submit → frozen judgment → result completes without a page reload.
+- Pointer input creates a drawing, Clear removes it, and Submit prevents further drawing.
+- The reference graph stays hidden during drawing and appears after the drawing is accepted.
 - Rejecting a drawing reveals accept-loss/counter-challenge options in place.
 - Counter-challenge returns to the same graphing screen with Player 1 as the drawer.
+- A completed result increments exactly one player's score, and Next match preserves scores while advancing the match and starting player.
 - Forfeit reaches the result screen.
 - The drawing canvas accepts pointer input, can be cleared, and can be submitted.
 - The reference graph is not visible during the drawing phase.
