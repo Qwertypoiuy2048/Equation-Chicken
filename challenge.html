@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equation Chicken · Challenge</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Two-player graphing game</div>
+        <h1>Equation Chicken</h1>
+      </div>
+      <div class="scoreboard" aria-label="Current score">
+        <div><span class="eyebrow">Player 1</span><strong>2</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+      </div>
+    </header>
+
+    <nav class="page-nav" aria-label="Game pages">
+      <a class="page-link" href="index.html">Turn</a>
+      <a class="page-link active" href="challenge.html" aria-current="page">Challenge</a>
+      <a class="page-link" href="result.html">Result</a>
+    </nav>
+
+    <main>
+      <section class="panel">
+        <div id="challenge-status" class="eyebrow">Challenge phase</div>
+        <h2 id="challenge-title">Player 2 must graph: <code>y = 2x + 3</code></h2>
+        <div class="graph-wrap">
+          <div id="drawing-board" class="graph" role="img" aria-label="Coordinate grid for drawing a graph">
+            <span class="axis-x"></span><span class="axis-y"></span>
+            <span class="axis-label x">x</span><span class="axis-label y">y</span>
+            <span class="line" aria-hidden="true"></span>
+            <span id="frozen-label" class="frozen-label" hidden>Drawing submitted · frozen for judgment</span>
+          </div>
+        </div>
+
+        <div class="graph-footer">
+          <span id="graph-hint" class="hint">Reference graph is hidden until judgment.</span>
+          <div id="draw-actions" class="actions">
+            <button class="action" type="button">Clear</button>
+            <button class="action primary" type="button" data-action="submit-drawing">Submit drawing</button>
+            <a class="action" href="result.html">Forfeit</a>
+          </div>
+        </div>
+
+        <div id="judge-actions" class="follow-up" hidden>
+          <div><div class="eyebrow">Judgment</div><h2>Player 1: how was the drawing?</h2></div>
+          <div class="actions"><a class="action primary" href="result.html">Drawing is good</a><button class="action" type="button" data-action="reject-drawing">Drawing is bad</button></div>
+        </div>
+
+        <div id="reject-actions" class="follow-up rejection" hidden>
+          <div><div class="eyebrow">Rejected drawing</div><h2>Player 2 chooses the next step</h2><p class="hint">Accept the loss or counter-challenge Player 1.</p></div>
+          <div class="actions"><a class="action" href="result.html">Accept loss</a><button class="action primary" type="button" data-action="counter-challenge">Counter-challenge</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

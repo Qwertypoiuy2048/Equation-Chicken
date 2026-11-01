@@ -40,6 +40,30 @@ button {
     background: var(--panel);
 }
 
+.page-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.page-link {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    padding: 11px 15px;
+    text-decoration: none;
+}
+
+.page-link.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
 .topbar {
     padding: 20px 24px;
     display: flex;

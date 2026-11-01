@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equation Chicken · Result</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Two-player graphing game</div>
+        <h1>Equation Chicken</h1>
+      </div>
+      <div class="scoreboard" aria-label="Current score">
+        <div><span class="eyebrow">Player 1</span><strong>3</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+      </div>
+    </header>
+
+    <nav class="page-nav" aria-label="Game pages">
+      <a class="page-link" href="index.html">Turn</a>
+      <a class="page-link" href="challenge.html">Challenge</a>
+      <a class="page-link active" href="result.html" aria-current="page">Result</a>
+    </nav>
+
+    <main>
+      <section class="panel result">
+        <div class="eyebrow">Match result</div>
+        <h2>Player 1 wins!</h2>
+        <p>Score: Player 1 <strong>3</strong> · Player 2 <strong>1</strong></p>
+        <p class="hint">Next starting player: Player 2</p>
+        <div class="result-actions"><a class="action primary" href="index.html">Next match</a></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
