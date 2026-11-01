@@ -134,7 +134,9 @@ The computer graph is a reference tool. It should remain hidden until the curren
 
 ## Wireframe
 
-The first interface can be built from four simple screens or states.
+An interactive version of the initial wireframe is available in [wireframe.html](wireframe.html). The testing strategy and first test cases are tracked in [TEST_PLAN.md](TEST_PLAN.md).
+
+The first interface can be built from three primary screens, with judgment embedded in the graphing screen.
 
 ### 1. Turn screen
 
@@ -180,7 +182,9 @@ The turn screen should make the current player, equation, score, removals, banne
 
 The challenged player uses the mouse or touch input to draw directly on the p5.js graph canvas. There is no timer.
 
-### 3. Judgment screen
+### 3. Judgment state within the graphing screen
+
+After the drawing is submitted, the graphing area shrinks or freezes in place and the judgment controls appear below it. The reference graph remains hidden while Player 1 decides whether the drawing is good or bad.
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -234,9 +238,9 @@ A simple state flow is:
 ```text
 TURN
 ├── ALTER → VALIDATE → TURN (other player)
-└── CHALLENGE → GRAPH DRAWING
+└── CHALLENGE → GRAPH DRAWING / JUDGMENT
                 ├── FORFEIT → RESULT
-                └── SUBMIT → JUDGMENT
+                └── SUBMIT → FREEZE DRAWING → JUDGMENT
                               ├── ACCEPT → REVEAL → RESULT
                               └── REJECT → ACCEPT LOSS or COUNTER-CHALLENGE
                                                         └── GRAPH DRAWING → RESULT

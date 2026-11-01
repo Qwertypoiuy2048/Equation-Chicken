@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equation Chicken · Wireframe</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Two-player graphing game</div>
+        <h1>Equation Chicken</h1>
+      </div>
+      <div class="scoreboard" aria-label="Current score">
+        <div><span class="eyebrow">Player 1</span><strong>2</strong></div>
+        <div><span class="eyebrow">Player 2</span><strong>1</strong></div>
+      </div>
+    </header>
+
+    <nav class="state-tabs" aria-label="Wireframe screens" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="turn" data-screen="turn">Turn</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="graph" data-screen="graph">Challenge</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="result" data-screen="result">Result</button>
+    </nav>
+
+    <main>
+      <section id="turn" class="screen active" role="tabpanel">
+        <div class="panel">
+          <div class="turn-header"><div><div class="eyebrow">Match 3</div><h2>Player 1's turn</h2></div><div class="eyebrow">Removals remaining: P1 2 · P2 1</div></div>
+          <div class="meta"><span>Valid graphable equation</span><span>One action per turn</span></div>
+          <div class="equation" aria-label="Current equation">y = 2x + 3</div>
+          <p class="banned"><strong>Banned this match:</strong> 4, ^</p>
+          <div class="actions"><button class="action" data-go="turn">Alter equation</button><button class="action primary" data-go="graph">Challenge Player 2</button></div>
+          <p class="history"><strong>Equation history:</strong> y = x → y = 2x → y = 2x + 3</p>
+        </div>
+      </section>
+
+      <section id="graph" class="screen" role="tabpanel" hidden>
+        <div class="panel">
+          <div id="challenge-status" class="eyebrow">Player 2 is drawing</div>
+          <h2 id="challenge-title">Player 2 must graph: <code>y = 2x + 3</code></h2>
+          <div class="graph-wrap"><div id="drawing-board" class="graph" role="img" aria-label="Coordinate grid for drawing a graph"><span class="axis-x"></span><span class="axis-y"></span><span class="axis-label x">x</span><span class="axis-label y">y</span><span class="line" aria-hidden="true"></span><span id="frozen-label" class="frozen-label" hidden>Drawing submitted · frozen for judgment</span></div></div>
+          <div class="graph-footer"><span id="graph-hint" class="hint">Reference graph is hidden until judgment.</span><div id="draw-actions" class="actions"><button class="action">Clear</button><button class="action primary" data-action="submit-drawing">Submit drawing</button><button class="action" data-go="result">Forfeit</button></div></div>
+          <div id="judge-actions" class="follow-up" hidden><div><div class="eyebrow">Judgment</div><h2>Player 1: how was the drawing?</h2></div><div class="actions"><button class="action primary" data-go="result">Drawing is good</button><button class="action" data-action="reject-drawing">Drawing is bad</button></div></div>
+          <div id="reject-actions" class="follow-up rejection" hidden><div><div class="eyebrow">Rejected drawing</div><h2>Player 2 chooses the next step</h2><p class="hint">Accept the loss or counter-challenge Player 1.</p></div><div class="actions"><button class="action" data-go="result">Accept loss</button><button class="action primary" data-action="counter-challenge">Counter-challenge</button></div></div>
+        </div>
+      </section>
+
+      <section id="result" class="screen" role="tabpanel" hidden>
+        <div class="panel result"><div class="eyebrow">Match result</div><h2>Player 1 wins!</h2><p>Score: Player 1 <strong>3</strong> · Player 2 <strong>1</strong></p><p class="hint">Next starting player: Player 2</p><div class="result-actions"><button class="action primary" data-go="turn">Next match</button></div></div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const screens = [...document.querySelectorAll('.screen')];
+    const tabs = [...document.querySelectorAll('.tab')];
+    const drawingBoard = document.querySelector('#drawing-board');
+    const drawActions = document.querySelector('#draw-actions');
+    const judgeActions = document.querySelector('#judge-actions');
+    const rejectActions = document.querySelector('#reject-actions');
+    const frozenLabel = document.querySelector('#frozen-label');
+    const challengeStatus = document.querySelector('#challenge-status');
+    const challengeTitle = document.querySelector('#challenge-title');
+    const graphHint = document.querySelector('#graph-hint');
+
+    function showScreen(id) {
+      screens.forEach(screen => { const active = screen.id === id; screen.classList.toggle('active', active); screen.hidden = !active; });
+      tabs.forEach(tab => { tab.setAttribute('aria-selected', String(tab.dataset.screen === id)); });
+    }
+
+    function resetChallenge(player = 'Player 2', counter = false) {
+      drawingBoard.classList.remove('is-frozen');
+      drawActions.hidden = false;
+      judgeActions.hidden = true;
+      rejectActions.hidden = true;
+      frozenLabel.hidden = true;
+      challengeStatus.textContent = counter ? 'Counter-challenge' : 'Challenge phase';
+      challengeTitle.innerHTML = `${player} must graph: <code>y = 2x + 3</code>`;
+      graphHint.textContent = 'Reference graph is hidden until judgment.';
+      showScreen('graph');
+    }
+
+    document.addEventListener('click', event => {
+      const target = event.target.closest('[data-screen], [data-go], [data-action]');
+      if (!target) return;
+      if (target.dataset.action === 'submit-drawing') {
+        drawingBoard.classList.add('is-frozen');
+        drawActions.hidden = true;
+        frozenLabel.hidden = false;
+        graphHint.textContent = 'Drawing is frozen. The reference graph remains hidden until a judgment is made.';
+        judgeActions.hidden = false;
+        return;
+      }
+      if (target.dataset.action === 'reject-drawing') {
+        judgeActions.hidden = true;
+        rejectActions.hidden = false;
+        return;
+      }
+      if (target.dataset.action === 'counter-challenge') {
+        resetChallenge('Player 1', true);
+        return;
+      }
+      showScreen(target.dataset.screen || target.dataset.go);
+    });
+  </script>
+</body>
+</html>
+
+<!-- |------------------|
+     |  Created by      |
+     |  Evan Crenshaw   |
+     |------------------| -->
