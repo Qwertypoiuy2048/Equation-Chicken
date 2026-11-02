@@ -255,6 +255,16 @@ main {
     color: var(--danger);
 }
 
+.screen-instructions {
+    margin: 14px 0 20px;
+    color: var(--muted);
+}
+
+.action.ready {
+    background: #2a8f52;
+    border-color: #2a8f52;
+}
+
 .banned {
     color: var(--danger);
     margin-bottom: 24px;

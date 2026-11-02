@@ -214,6 +214,7 @@ function renderTurnPage(state) {
   const accept = document.querySelector('[data-action="accept-equation"]');
   if (editor) editor.value = equationExpression(state.equation);
   if (accept) accept.disabled = true;
+  if (accept) accept.classList.remove('ready');
   verifiedEquation = null;
   renderEquationPreview(state.equation);
 }
@@ -312,14 +313,18 @@ document.addEventListener('click', event => {
     const validation = candidate ? EquationParser.validateEdit(state.equation, candidate) : { valid: false, reason: 'Enter an equation before verifying.' };
     if (!validation.valid) {
       verifiedEquation = null;
-      document.querySelector('[data-action="accept-equation"]').disabled = true;
+      const accept = document.querySelector('[data-action="accept-equation"]');
+      accept.disabled = true;
+      accept.classList.remove('ready');
       message.textContent = validation.reason;
       message.classList.add('error');
       renderEquationPreview(candidate, validation.issues);
       return;
     }
     verifiedEquation = candidate;
-    document.querySelector('[data-action="accept-equation"]').disabled = false;
+    const accept = document.querySelector('[data-action="accept-equation"]');
+    accept.disabled = false;
+    accept.classList.add('ready');
     message.textContent = 'One-token edit verified. Accept it to save the change.';
     message.classList.remove('error');
     renderEquationPreview(candidate, [], 'valid', validation.changes);
@@ -347,7 +352,9 @@ document.addEventListener('click', event => {
     Game.revertEquation(state);
     saveState(state);
     editor.value = equationExpression(state.equation);
-    document.querySelector('[data-action="accept-equation"]').disabled = true;
+    const accept = document.querySelector('[data-action="accept-equation"]');
+    accept.disabled = true;
+    accept.classList.remove('ready');
     verifiedEquation = null;
     message.textContent = 'Equation reverted to the start of the turn.';
     message.classList.remove('error');
@@ -423,7 +430,16 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('input', event => {
-  if (event.target.id === 'equation-editor') renderEquationPreview(makeEquation(event.target.value));
+  if (event.target.id === 'equation-editor') {
+    verifiedEquation = null;
+    const accept = document.querySelector('[data-action="accept-equation"]');
+    const message = document.querySelector('#equation-message');
+    accept.disabled = true;
+    accept.classList.remove('ready');
+    message.textContent = '';
+    message.classList.remove('error');
+    renderEquationPreview(makeEquation(event.target.value));
+  }
 });
 
 const state = loadState();
@@ -433,6 +449,7 @@ if (document.querySelector('[data-winner-name]')) renderResultPage(state);
 
 function renderResultPage(currentState) {
   updateSharedText(currentState);
+  setText('[data-final-equation]', currentState.equation);
   const finalJudgment = document.querySelector('#final-judgment');
   const matchResult = document.querySelector('#match-result');
   if (!finalJudgment || !matchResult) return;
