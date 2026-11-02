@@ -107,6 +107,38 @@ function setupCanvas(canvas) {
   return controller;
 }
 
+function drawReferenceGraph(canvas, equation) {
+  if (!canvas || typeof EquationParser !== 'object') return;
+  const graph = EquationParser.tryCompile(equation);
+  if (!graph) return;
+  const context = canvas.getContext('2d');
+  const bounds = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  const scale = 32;
+  const axisX = bounds.width * 0.44;
+  const axisY = bounds.height * 0.58;
+  canvas.width = Math.max(1, Math.floor(bounds.width * ratio));
+  canvas.height = Math.max(1, Math.floor(bounds.height * ratio));
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.clearRect(0, 0, bounds.width, bounds.height);
+  context.strokeStyle = '#2a8f52';
+  context.lineWidth = 4;
+  context.lineCap = 'round';
+  context.beginPath();
+
+  const minimumX = -axisX / scale;
+  const maximumX = (bounds.width - axisX) / scale;
+  for (let x = minimumX; x <= maximumX; x += 0.05) {
+    const y = graph.evaluate(x);
+    const pixelX = axisX + x * scale;
+    const pixelY = axisY - y * scale;
+    if (!Number.isFinite(y)) { context.beginPath(); continue; }
+    if (x === minimumX) context.moveTo(pixelX, pixelY);
+    else context.lineTo(pixelX, pixelY);
+  }
+  context.stroke();
+}
+
 function renderTurnPage(state) {
   updateSharedText(state);
   const challengeLink = document.querySelector('[data-action="start-challenge"]');
@@ -121,7 +153,7 @@ function renderChallengePage(state) {
   const rejectActions = document.querySelector('#reject-actions');
   const acceptedActions = document.querySelector('#accepted-actions');
   const frozenLabel = document.querySelector('#frozen-label');
-  const referenceLine = document.querySelector('#reference-line');
+  const referenceCanvas = document.querySelector('#reference-canvas');
   const title = document.querySelector('#challenge-title');
   const status = document.querySelector('#challenge-status');
   const hint = document.querySelector('#graph-hint');
@@ -139,7 +171,8 @@ function renderChallengePage(state) {
   judgeActions.hidden = !ui.judgeActions;
   rejectActions.hidden = !ui.rejectActions;
   acceptedActions.hidden = !ui.acceptedActions;
-  referenceLine.hidden = !ui.referenceVisible;
+  referenceCanvas.hidden = !ui.referenceVisible;
+  if (ui.referenceVisible) drawReferenceGraph(referenceCanvas, state.equation);
 
   if (ui.frozen) {
     board.classList.add('is-frozen');

@@ -223,6 +223,14 @@ main {
     cursor: crosshair;
 }
 
+.reference-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
 .graph.is-frozen .drawing-canvas {
     cursor: not-allowed;
     pointer-events: none;

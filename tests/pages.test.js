@@ -10,6 +10,7 @@ test('all primary pages load shared CSS, state, and browser scripts', () => {
   for (const page of pages) {
     const html = fs.readFileSync(path.join(root, page), 'utf8');
     assert.match(html, /styles\.css/);
+    assert.match(html, /equation\.js/);
     assert.match(html, /game-state\.js/);
     assert.match(html, /script\.js/);
   }
@@ -21,7 +22,7 @@ test('the challenge page contains the drawing and challenge controls', () => {
     assert.match(html, new RegExp(`data-action="${action}"`));
   }
   assert.match(html, /id="drawing-canvas"/);
-  assert.match(html, /id="reference-line"/);
+  assert.match(html, /id="reference-canvas"/);
 });
 
 test('browser script contains the shared state and interaction entry points', () => {
@@ -44,4 +45,12 @@ test('drawings and reference use separate colors without clearing the counter dr
   assert.match(css, /--reference:\s*#2a8f52/);
   assert.match(browserScript, /setStrokeColor/);
   assert.doesNotMatch(browserScript, /if \(drawing\) drawing\.clear\(\);\s*renderChallengePage\(state\);/);
+});
+
+test('reference graph is generated from the equation on a separate canvas', () => {
+  const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+  assert.match(browserScript, /function drawReferenceGraph\(canvas, equation\)/);
+  assert.match(browserScript, /const graph = EquationParser\.tryCompile\(equation\)/);
+  assert.match(browserScript, /graph\.evaluate\(x\)/);
+  assert.match(browserScript, /drawReferenceGraph\(referenceCanvas, state\.equation\)/);
 });
