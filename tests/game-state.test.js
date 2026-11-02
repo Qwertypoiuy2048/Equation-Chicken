@@ -6,7 +6,8 @@ test('creates a new match with the expected defaults', () => {
   const state = Game.createState();
   assert.equal(state.match, 1);
   assert.equal(state.currentPlayer, 1);
-  assert.equal(state.equation, 'y = 2x + 3');
+  assert.equal(state.equation, 'y = x');
+  assert.deepEqual(state.history, ['y = x']);
   assert.deepEqual(state.scores, { 1: 0, 2: 0 });
   assert.equal(state.phase, 'turn');
 });
@@ -107,14 +108,14 @@ test('next match resets match state but preserves scores', () => {
   assert.equal(next.currentPlayer, 2);
   assert.deepEqual(next.scores, { 1: 1, 2: 0 });
   assert.equal(next.phase, 'turn');
-  assert.equal(next.equation, 'y = 2x + 3');
+  assert.equal(next.equation, 'y = x');
   assert.equal(next.challenger, null);
 });
 
 test('next match resets the equation to the default starting equation', () => {
   const state = Game.finishMatch(Game.createState({ equation: 'y = x^2' }), 1, 'accepted-loss');
   const next = Game.nextMatch(state);
-  assert.equal(next.equation, 'y = 2x + 3');
+  assert.equal(next.equation, 'y = x');
 });
 
 test('challenge UI shows only drawing actions during graphing', () => {

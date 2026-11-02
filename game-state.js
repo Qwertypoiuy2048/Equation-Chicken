@@ -7,6 +7,7 @@
     match: 1,
     currentPlayer: 1,
     equation: 'y = x',
+    history: ['y = x'],
     scores: { 1: 0, 2: 0 },
     phase: 'turn',
     challenger: null,
@@ -25,6 +26,7 @@
       ...DEFAULT_STATE,
       ...overrides,
       scores: { ...DEFAULT_STATE.scores, ...(overrides.scores || {}) },
+      history: [...(overrides.history || DEFAULT_STATE.history)],
       drawings: (overrides.drawings || DEFAULT_STATE.drawings).map(stroke => ({
         player: stroke.player,
         color: stroke.color,

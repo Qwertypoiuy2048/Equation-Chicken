@@ -21,6 +21,8 @@ test('the turn page binds its displayed equation to shared state', () => {
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
   assert.match(html, /data-equation/);
   assert.match(browserScript, /setText\('\[data-equation\]', state\.equation\)/);
+  assert.match(html, /data-equation-history/);
+  assert.match(browserScript, /setText\('\[data-equation-history\]', state\.history\.join/);
 });
 
 test('the result page contains final judgment choices', () => {

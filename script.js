@@ -34,6 +34,7 @@ function updateSharedText(state) {
   setText('[data-current-player-name]', playerName(state.currentPlayer));
   setText('[data-match-number]', state.match);
   setText('[data-equation]', state.equation);
+  setText('[data-equation-history]', state.history.join(' → '));
   setText('[data-winner-name]', playerName(state.winner || state.currentPlayer));
   setText('[data-next-player-name]', playerName(state.nextStartingPlayer));
 }
