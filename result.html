@@ -29,10 +29,29 @@
     </nav>
 
     <main>
-      <section class="panel result">
+      <section id="final-judgment" class="panel result" hidden>
+        <div class="eyebrow">Final judgment</div>
+        <h2>Both players have drawn.</h2>
+        <p>Choose which player was right, or mark both drawings as incorrect.</p>
+        <div class="graph-wrap">
+          <div id="final-graph" class="graph" role="img" aria-label="Comparison of both player drawings and the computer reference graph">
+            <span class="axis-x"></span><span class="axis-y"></span>
+            <span class="axis-label x">x</span><span class="axis-label y">y</span>
+            <canvas id="final-reference-canvas" class="reference-canvas" aria-label="Computer reference graph"></canvas>
+            <canvas id="final-drawing-canvas" class="final-drawing-canvas" aria-label="Both player drawings"></canvas>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="action primary" type="button" data-action="award-player" data-winner="1">Player 1 was right</button>
+          <button class="action primary" type="button" data-action="award-player" data-winner="2">Player 2 was right</button>
+          <button class="action" type="button" data-action="resolve-draw">Both failed</button>
+        </div>
+      </section>
+
+      <section id="match-result" class="panel result">
         <div class="eyebrow">Match result</div>
-        <h2><span data-winner-name>Player 1</span> wins!</h2>
-        <p>Score: Player 1 <strong data-score-player="1">0</strong> · Player 2 <strong data-score-player="2">0</strong></p>
+        <h2 data-result-title><span data-winner-name>Player 1</span> wins!</h2>
+        <p data-result-detail>Player 1 <strong data-score-player="1">0</strong> · Player 2 <strong data-score-player="2">0</strong></p>
         <p class="hint">Next starting player: <span data-next-player-name>Player 1</span></p>
         <div class="result-actions"><a class="action primary" href="index.html" data-action="next-match">Next match</a></div>
       </section>

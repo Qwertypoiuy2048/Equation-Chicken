@@ -11,6 +11,20 @@ test('creates a new match with the expected defaults', () => {
   assert.equal(state.phase, 'turn');
 });
 
+test('accepts a custom equation in shared state', () => {
+  const state = Game.createState({ equation: 'y = x^2' });
+  assert.equal(state.equation, 'y = x^2');
+});
+
+test('challenge transitions preserve the shared equation', () => {
+  const state = Game.startChallenge(Game.createState({ equation: 'y = 2x^2 + 3' }));
+  assert.equal(state.equation, 'y = 2x^2 + 3');
+  Game.submitDrawing(state);
+  Game.rejectDrawing(state);
+  Game.counterChallenge(state);
+  assert.equal(state.equation, 'y = 2x^2 + 3');
+});
+
 test('starts a challenge with the other player drawing', () => {
   const state = Game.startChallenge(Game.createState({ currentPlayer: 1 }));
   assert.deepEqual({ challenger: state.challenger, challengedPlayer: state.challengedPlayer, drawer: state.drawer }, { challenger: 1, challengedPlayer: 2, drawer: 2 });
@@ -35,6 +49,38 @@ test('counter-challenge switches the drawer and unfreezes drawing', () => {
   assert.equal(state.drawer, 1);
   assert.equal(state.phase, 'graphing');
   assert.equal(state.drawingSubmitted, false);
+});
+
+test('submitting the counter-challenge moves to final judgment', () => {
+  const state = Game.counterChallenge(Game.rejectDrawing(Game.submitDrawing(Game.startChallenge(Game.createState()))));
+  Game.submitDrawing(state);
+  assert.equal(state.phase, 'final-judgment');
+  assert.equal(state.counterChallengeActive, true);
+});
+
+test('shared state preserves drawings for final comparison', () => {
+  const state = Game.createState({ drawings: [{ player: 2, color: '#244b74', points: [{ x: 10, y: 20 }] }] });
+  const restored = Game.createState(state);
+  assert.deepEqual(restored.drawings, state.drawings);
+});
+
+test('final judgment can award either player', () => {
+  const state = Game.counterChallenge(Game.rejectDrawing(Game.submitDrawing(Game.startChallenge(Game.createState()))));
+  Game.submitDrawing(state);
+  Game.finishMatch(state, 1, 'final-judgment');
+  assert.equal(state.scores[1], 1);
+  assert.equal(state.scores[2], 0);
+  assert.equal(state.winner, 1);
+});
+
+test('both failed produces a draw with no point', () => {
+  const state = Game.counterChallenge(Game.rejectDrawing(Game.submitDrawing(Game.startChallenge(Game.createState({ scores: { 1: 2, 2: 1 } })))));
+  Game.submitDrawing(state);
+  Game.resolveDraw(state);
+  assert.deepEqual(state.scores, { 1: 2, 2: 1 });
+  assert.equal(state.winner, null);
+  assert.equal(state.lastResult, 'draw');
+  assert.equal(state.nextStartingPlayer, 2);
 });
 
 test('accepted drawing awards the drawer one point', () => {
@@ -63,6 +109,12 @@ test('next match resets match state but preserves scores', () => {
   assert.equal(next.phase, 'turn');
   assert.equal(next.equation, 'y = 2x + 3');
   assert.equal(next.challenger, null);
+});
+
+test('next match resets the equation to the default starting equation', () => {
+  const state = Game.finishMatch(Game.createState({ equation: 'y = x^2' }), 1, 'accepted-loss');
+  const next = Game.nextMatch(state);
+  assert.equal(next.equation, 'y = 2x + 3');
 });
 
 test('challenge UI shows only drawing actions during graphing', () => {

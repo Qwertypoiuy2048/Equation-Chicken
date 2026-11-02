@@ -115,6 +115,10 @@ The challenge sequence is:
 9. If Player A succeeds at the counter-challenge, Player A receives one point.
 10. If Player A fails, Player B receives one point.
 
+When both players have drawn, the final result page can award the point to Player 1, award it to Player 2, or record that both drawings failed. A both-failed result awards no point.
+
+The final judgment view displays both player drawings alongside the computer-generated reference graph for comparison.
+
 The computer graph is a reference tool. It should remain hidden until the current player has finished drawing so that the player must graph the equation independently.
 
 ## Scoring and reset

@@ -6,12 +6,14 @@
   const DEFAULT_STATE = {
     match: 1,
     currentPlayer: 1,
-    equation: 'y = 2x + 3',
+    equation: 'y = x',
     scores: { 1: 0, 2: 0 },
     phase: 'turn',
     challenger: null,
     challengedPlayer: null,
     drawer: null,
+    counterChallengeActive: false,
+    drawings: [],
     drawingSubmitted: false,
     winner: null,
     nextStartingPlayer: 1,
@@ -22,7 +24,12 @@
     return {
       ...DEFAULT_STATE,
       ...overrides,
-      scores: { ...DEFAULT_STATE.scores, ...(overrides.scores || {}) }
+      scores: { ...DEFAULT_STATE.scores, ...(overrides.scores || {}) },
+      drawings: (overrides.drawings || DEFAULT_STATE.drawings).map(stroke => ({
+        player: stroke.player,
+        color: stroke.color,
+        points: stroke.points.map(point => ({ x: point.x, y: point.y }))
+      }))
     };
   }
 
@@ -34,6 +41,8 @@
     state.challenger = state.currentPlayer;
     state.challengedPlayer = otherPlayer(state.currentPlayer);
     state.drawer = state.challengedPlayer;
+    state.counterChallengeActive = false;
+    state.drawings = [];
     state.phase = 'graphing';
     state.drawingSubmitted = false;
     state.winner = null;
@@ -42,7 +51,7 @@
   }
 
   function submitDrawing(state) {
-    state.phase = 'judgment';
+    state.phase = state.counterChallengeActive ? 'final-judgment' : 'judgment';
     state.drawingSubmitted = true;
     return state;
   }
@@ -60,6 +69,7 @@
 
   function counterChallenge(state) {
     state.drawer = state.challenger;
+    state.counterChallengeActive = true;
     state.phase = 'graphing';
     state.drawingSubmitted = false;
     return state;
@@ -71,6 +81,14 @@
     state.nextStartingPlayer = otherPlayer(winner);
     state.phase = 'result';
     state.lastResult = result;
+    return state;
+  }
+
+  function resolveDraw(state) {
+    state.winner = null;
+    state.nextStartingPlayer = state.scores[1] < state.scores[2] ? 1 : state.scores[2] < state.scores[1] ? 2 : 1;
+    state.phase = 'result';
+    state.lastResult = 'draw';
     return state;
   }
 
@@ -104,6 +122,7 @@
     acceptDrawing,
     counterChallenge,
     finishMatch,
+    resolveDraw,
     nextMatch,
     getChallengeUi
   };

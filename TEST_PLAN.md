@@ -44,6 +44,7 @@ tests/
 - Submitting a drawing freezes the graphing area and reveals judgment options on the same screen.
 - Rejecting a drawing replaces the judgment options with accept-loss or counter-challenge options.
 - A counter-challenge swaps the drawer and keeps the same equation.
+- After both players draw, final judgment can award Player 1, award Player 2, or record both failures with no point.
 - Starting-player rules choose the previous loser, lower-score player after a draw, or Player 1 on a tie.
 - Match reset restores `y = x` and clears banned tokens while preserving scores and used removals.
 
@@ -65,6 +66,9 @@ tests/
 - The reference graph stays hidden during drawing and appears after the drawing is accepted.
 - Rejecting a drawing reveals accept-loss/counter-challenge options in place.
 - Counter-challenge returns to the same graphing screen with Player 1 as the drawer.
+- After the counter-challenge drawing is submitted, the result page offers the three final-judgment choices.
+- Final judgment displays both stored player drawings together with the computer reference graph.
+- Both-failed leaves scores unchanged and selects the next starting player from the current score.
 - A completed result increments exactly one player's score, and Next match preserves scores while advancing the match and starting player.
 - Forfeit reaches the result screen.
 - The drawing canvas accepts pointer input, can be cleared, and can be submitted.

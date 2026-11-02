@@ -33,6 +33,7 @@ function updateSharedText(state) {
   setText('[data-score-player="2"]', state.scores[2]);
   setText('[data-current-player-name]', playerName(state.currentPlayer));
   setText('[data-match-number]', state.match);
+  setText('[data-equation]', state.equation);
   setText('[data-winner-name]', playerName(state.winner || state.currentPlayer));
   setText('[data-next-player-name]', playerName(state.nextStartingPlayer));
 }
@@ -56,11 +57,27 @@ function resetForNextMatch(state) {
   saveState(Game.nextMatch(state));
 }
 
-function setupCanvas(canvas) {
+function setupCanvas(canvas, initialState) {
   if (!canvas) return null;
   if (canvasControllers.has(canvas)) return canvasControllers.get(canvas);
   const context = canvas.getContext('2d');
   let drawing = false;
+  let state = initialState;
+  let strokeColor = '#244b74';
+
+  function redraw() {
+    const bounds = canvas.getBoundingClientRect();
+    context.clearRect(0, 0, bounds.width, bounds.height);
+    for (const stroke of state.drawings || []) {
+      if (!stroke.points.length) continue;
+      context.strokeStyle = stroke.color;
+      context.beginPath();
+      context.moveTo(stroke.points[0].x, stroke.points[0].y);
+      for (const point of stroke.points.slice(1)) context.lineTo(point.x, point.y);
+      context.stroke();
+    }
+    context.strokeStyle = strokeColor;
+  }
 
   function resize() {
     const bounds = canvas.getBoundingClientRect();
@@ -70,7 +87,8 @@ function setupCanvas(canvas) {
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     context.lineWidth = 4;
     context.lineCap = 'round';
-    context.strokeStyle = '#244b74';
+    context.strokeStyle = strokeColor;
+    redraw();
   }
 
   function point(event) {
@@ -83,25 +101,33 @@ function setupCanvas(canvas) {
     drawing = true;
     canvas.setPointerCapture(event.pointerId);
     const position = point(event);
+    state.drawings.push({ player: state.drawer, color: strokeColor, points: [position] });
     context.beginPath();
     context.moveTo(position.x, position.y);
   });
   canvas.addEventListener('pointermove', event => {
     if (!drawing || canvas.dataset.frozen === 'true') return;
     const position = point(event);
+    const stroke = state.drawings[state.drawings.length - 1];
+    if (stroke) stroke.points.push(position);
     context.lineTo(position.x, position.y);
     context.stroke();
   });
-  canvas.addEventListener('pointerup', () => { drawing = false; });
-  canvas.addEventListener('pointercancel', () => { drawing = false; });
+  canvas.addEventListener('pointerup', () => { drawing = false; saveState(state); });
+  canvas.addEventListener('pointercancel', () => { drawing = false; saveState(state); });
   window.addEventListener('resize', resize);
   resize();
 
   const controller = {
-    clear() { context.clearRect(0, 0, canvas.width, canvas.height); },
+    clear() {
+      state.drawings = state.drawings.filter(stroke => stroke.player !== state.drawer);
+      saveState(state);
+      redraw();
+    },
     freeze() { canvas.dataset.frozen = 'true'; },
     unfreeze() { canvas.dataset.frozen = 'false'; },
-    setStrokeColor(color) { context.strokeStyle = color; }
+    setStrokeColor(color) { strokeColor = color; context.strokeStyle = color; },
+    setState(nextState) { state = nextState; redraw(); }
   };
   canvasControllers.set(canvas, controller);
   return controller;
@@ -139,6 +165,37 @@ function drawReferenceGraph(canvas, equation) {
   context.stroke();
 }
 
+function drawPlayerStrokes(canvas, drawings) {
+  if (!canvas) return;
+  const context = canvas.getContext('2d');
+  const bounds = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(bounds.width * ratio));
+  canvas.height = Math.max(1, Math.floor(bounds.height * ratio));
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.clearRect(0, 0, bounds.width, bounds.height);
+  context.lineWidth = 4;
+  context.lineCap = 'round';
+  for (const stroke of drawings || []) {
+    if (!stroke.points.length) continue;
+    context.strokeStyle = stroke.color;
+    context.beginPath();
+    context.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (const point of stroke.points.slice(1)) context.lineTo(point.x, point.y);
+    context.stroke();
+  }
+}
+
+function renderFinalJudgmentGraph(state) {
+  const referenceCanvas = document.querySelector('#final-reference-canvas');
+  const drawingCanvas = document.querySelector('#final-drawing-canvas');
+  if (!referenceCanvas || !drawingCanvas) return;
+  referenceCanvas.hidden = false;
+  drawingCanvas.hidden = false;
+  drawReferenceGraph(referenceCanvas, state.equation);
+  drawPlayerStrokes(drawingCanvas, state.drawings);
+}
+
 function renderTurnPage(state) {
   updateSharedText(state);
   const challengeLink = document.querySelector('[data-action="start-challenge"]');
@@ -157,11 +214,12 @@ function renderChallengePage(state) {
   const title = document.querySelector('#challenge-title');
   const status = document.querySelector('#challenge-status');
   const hint = document.querySelector('#graph-hint');
-  const drawing = setupCanvas(canvas);
+  const drawing = setupCanvas(canvas, state);
 
   if (!state.challengedPlayer) startChallenge(state);
   const drawer = state.drawer || state.challengedPlayer;
   const ui = Game.getChallengeUi(state.phase);
+  drawing.setState(state);
   drawing.setStrokeColor(drawer === state.challengedPlayer ? '#244b74' : '#b86b1f');
   updateSharedText(state);
   title.innerHTML = `${playerName(drawer)} must graph: <code>${state.equation}</code>`;
@@ -206,6 +264,20 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.action === 'award-player') {
+    event.preventDefault();
+    finishMatch(state, Number(target.dataset.winner), 'final-judgment');
+    return;
+  }
+
+  if (target.dataset.action === 'resolve-draw') {
+    event.preventDefault();
+    Game.resolveDraw(state);
+    saveState(state);
+    renderResultPage(state);
+    return;
+  }
+
   if (target.dataset.action === 'complete-accepted') {
     event.preventDefault();
     finishMatch(state, state.drawer, 'accepted-drawing');
@@ -214,13 +286,17 @@ document.addEventListener('click', event => {
 
   const canvas = document.querySelector('#drawing-canvas');
   const board = document.querySelector('#drawing-board');
-  const drawing = setupCanvas(canvas);
+  const drawing = setupCanvas(canvas, state);
 
   if (target.dataset.action === 'clear-drawing' && drawing) drawing.clear();
 
   if (target.dataset.action === 'submit-drawing' && drawing) {
     Game.submitDrawing(state);
     saveState(state);
+    if (state.phase === 'final-judgment') {
+      navigate('result.html');
+      return;
+    }
     renderChallengePage(state);
   }
 
@@ -254,4 +330,19 @@ if (document.querySelector('[data-winner-name]')) renderResultPage(state);
 
 function renderResultPage(currentState) {
   updateSharedText(currentState);
+  const finalJudgment = document.querySelector('#final-judgment');
+  const matchResult = document.querySelector('#match-result');
+  if (!finalJudgment || !matchResult) return;
+  const isChoosing = currentState.phase === 'final-judgment';
+  finalJudgment.hidden = !isChoosing;
+  matchResult.hidden = isChoosing;
+  if (isChoosing) renderFinalJudgmentGraph(currentState);
+  if (!isChoosing) {
+    const title = matchResult.querySelector('[data-result-title]');
+    const detail = matchResult.querySelector('[data-result-detail]');
+    const next = matchResult.querySelector('[data-next-player-name]');
+    title.textContent = currentState.lastResult === 'draw' ? 'Both players failed' : `${playerName(currentState.winner)} wins!`;
+    detail.textContent = currentState.lastResult === 'draw' ? 'No point awarded.' : `Player 1 ${currentState.scores[1]} · Player 2 ${currentState.scores[2]}`;
+    next.textContent = playerName(currentState.nextStartingPlayer);
+  }
 }

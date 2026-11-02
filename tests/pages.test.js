@@ -16,6 +16,23 @@ test('all primary pages load shared CSS, state, and browser scripts', () => {
   }
 });
 
+test('the turn page binds its displayed equation to shared state', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+  assert.match(html, /data-equation/);
+  assert.match(browserScript, /setText\('\[data-equation\]', state\.equation\)/);
+});
+
+test('the result page contains final judgment choices', () => {
+  const html = fs.readFileSync(path.join(root, 'result.html'), 'utf8');
+  assert.match(html, /id="final-judgment"/);
+  assert.match(html, /data-action="award-player" data-winner="1"/);
+  assert.match(html, /data-action="award-player" data-winner="2"/);
+  assert.match(html, /data-action="resolve-draw"/);
+  assert.match(html, /id="final-reference-canvas"/);
+  assert.match(html, /id="final-drawing-canvas"/);
+});
+
 test('the challenge page contains the drawing and challenge controls', () => {
   const html = fs.readFileSync(path.join(root, 'challenge.html'), 'utf8');
   for (const action of ['clear-drawing', 'submit-drawing', 'accept-drawing', 'reject-drawing', 'accept-loss', 'counter-challenge', 'forfeit']) {
