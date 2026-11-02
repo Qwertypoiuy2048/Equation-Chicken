@@ -46,6 +46,16 @@ test('accepting an edit does not move the turn-start snapshot', () => {
   assert.equal(state.equation, 'y = x');
 });
 
+test('accepting an equation ends the turn and changes the active player', () => {
+  const state = Game.createState();
+  Game.acceptTurnEquation(state, 'y = x^2');
+  assert.equal(state.equation, 'y = x^2');
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.phase, 'turn');
+  assert.equal(state.turnStartEquation, 'y = x^2');
+  assert.deepEqual(state.turnStartHistory, ['y = x', 'y = x^2']);
+});
+
 test('challenge transitions preserve the shared equation', () => {
   const state = Game.startChallenge(Game.createState({ equation: 'y = 2x^2 + 3' }));
   assert.equal(state.equation, 'y = 2x^2 + 3');

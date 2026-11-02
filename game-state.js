@@ -98,6 +98,15 @@
     return state;
   }
 
+  function acceptTurnEquation(state, equation) {
+    updateEquation(state, equation);
+    state.currentPlayer = otherPlayer(state.currentPlayer);
+    state.turnStartEquation = state.equation;
+    state.turnStartHistory = [...state.history];
+    state.phase = 'turn';
+    return state;
+  }
+
   function finishMatch(state, winner, result) {
     state.winner = winner;
     state.scores[winner] += 1;
@@ -146,6 +155,7 @@
     counterChallenge,
     updateEquation,
     revertEquation,
+    acceptTurnEquation,
     finishMatch,
     resolveDraw,
     nextMatch,

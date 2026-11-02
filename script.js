@@ -34,6 +34,7 @@ function updateSharedText(state) {
   setText('[data-score-player="2"]', state.scores[2]);
   setText('[data-current-player-name]', playerName(state.currentPlayer));
   setText('[data-match-number]', state.match);
+  setText('[data-equation]', state.equation);
   setText('[data-equation-history]', state.history.join(' → '));
   setText('[data-winner-name]', playerName(state.winner || state.currentPlayer));
   setText('[data-next-player-name]', playerName(state.nextStartingPlayer));
@@ -199,12 +200,20 @@ function renderFinalJudgmentGraph(state) {
 
 function renderTurnPage(state) {
   updateSharedText(state);
+  setTurnEditing(false);
   const editor = document.querySelector('#equation-editor');
   const accept = document.querySelector('[data-action="accept-equation"]');
   if (editor) editor.value = state.equation;
   if (accept) accept.disabled = true;
   verifiedEquation = null;
   renderEquationPreview(state.equation);
+}
+
+function setTurnEditing(editing) {
+  const turnActions = document.querySelector('#turn-actions');
+  const editActions = document.querySelector('#edit-actions');
+  if (turnActions) turnActions.hidden = editing;
+  if (editActions) editActions.hidden = !editing;
 }
 
 function renderEquationPreview(equation, issues = [], status = 'normal', changes = []) {
@@ -275,6 +284,18 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.action === 'start-edit') {
+    const editor = document.querySelector('#equation-editor');
+    const message = document.querySelector('#equation-message');
+    setTurnEditing(true);
+    editor.value = state.equation;
+    message.textContent = '';
+    message.classList.remove('error');
+    renderEquationPreview(state.equation);
+    editor.focus();
+    return;
+  }
+
   if (target.dataset.action === 'verify-equation') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
@@ -304,13 +325,10 @@ document.addEventListener('click', event => {
       message.classList.add('error');
       return;
     }
-    Game.updateEquation(state, verifiedEquation);
+    Game.acceptTurnEquation(state, verifiedEquation);
     saveState(state);
-    target.disabled = true;
     verifiedEquation = null;
-    message.textContent = 'Equation accepted and saved.';
-    message.classList.remove('error');
-    renderEquationPreview(state.equation, [], 'valid', []);
+    navigate('index.html');
     return;
   }
 
@@ -325,6 +343,7 @@ document.addEventListener('click', event => {
     message.textContent = 'Equation reverted to the start of the turn.';
     message.classList.remove('error');
     renderEquationPreview(state.equation);
+    setTurnEditing(false);
     return;
   }
 

@@ -35,12 +35,16 @@
           <div class="eyebrow">Removals remaining: P1 2 · P2 1</div>
         </div>
         <div class="meta"><span>Valid graphable equation</span><span>One action per turn</span></div>
-        <label class="equation-editor-label" for="equation-editor">Equation</label>
-        <input id="equation-editor" class="equation-editor" type="text" value="y = x" aria-describedby="equation-message" autocomplete="off">
-        <div id="equation-preview" class="equation-preview" aria-label="Equation token preview"></div>
-        <p id="equation-message" class="equation-message" role="status" aria-live="polite"></p>
+        <div class="equation" aria-label="Current equation" data-equation>y = x</div>
+        <section id="edit-actions" class="equation-editor-panel" hidden>
+          <label class="equation-editor-label" for="equation-editor">Edit equation</label>
+          <input id="equation-editor" class="equation-editor" type="text" value="y = x" aria-describedby="equation-message" autocomplete="off">
+          <div id="equation-preview" class="equation-preview" aria-label="Equation token preview"></div>
+          <p id="equation-message" class="equation-message" role="status" aria-live="polite"></p>
+          <div class="actions"><button class="action primary" type="button" data-action="verify-equation">Verify</button><button class="action" type="button" data-action="accept-equation" disabled>Accept</button><button class="action" type="button" data-action="revert-equation">Revert</button></div>
+        </section>
         <p class="banned"><strong>Banned this match:</strong> 4, ^</p>
-        <div class="actions"><button class="action primary" type="button" data-action="verify-equation">Verify</button><button class="action" type="button" data-action="accept-equation" disabled>Accept</button><button class="action" type="button" data-action="revert-equation">Revert</button></div>
+        <div id="turn-actions" class="actions"><button class="action" type="button" data-action="start-edit">Alter equation</button><a class="action primary" href="challenge.html" data-action="start-challenge">Challenge the other player</a></div>
         <p class="history"><strong>Equation history:</strong> <span data-equation-history>y = x</span></p>
       </section>
     </main>

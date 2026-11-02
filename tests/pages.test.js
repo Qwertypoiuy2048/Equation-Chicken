@@ -30,11 +30,15 @@ test('the turn page exposes verify and revert equation controls', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
   assert.match(html, /id="equation-editor"/);
+  assert.match(html, /id="turn-actions"/);
+  assert.match(html, /data-action="start-edit"/);
+  assert.match(html, /id="edit-actions"[^>]*hidden/);
   assert.match(html, /data-action="verify-equation"/);
   assert.match(html, /data-action="accept-equation"/);
   assert.match(html, /data-action="revert-equation"/);
   assert.match(browserScript, /EquationParser\.validateEdit\(state\.equation, candidate\)/);
-  assert.match(browserScript, /Game\.updateEquation\(state, verifiedEquation\)/);
+  assert.match(browserScript, /Game\.acceptTurnEquation\(state, verifiedEquation\)/);
+  assert.match(browserScript, /navigate\('index\.html'\)/);
   assert.match(browserScript, /Game\.revertEquation\(state\)/);
   assert.match(browserScript, /EquationParser\.annotateTokens/);
   assert.match(browserScript, /validation\.changes/);
