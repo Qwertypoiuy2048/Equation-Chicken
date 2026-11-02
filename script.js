@@ -251,11 +251,16 @@ function renderChallengePage(state) {
   const title = document.querySelector('#challenge-title');
   const status = document.querySelector('#challenge-status');
   const hint = document.querySelector('#graph-hint');
+  const scratchEquation = document.querySelector('#scratch-equation');
   const drawing = setupCanvas(canvas, state);
 
   if (!state.challengedPlayer) startChallenge(state);
   const drawer = state.drawer || state.challengedPlayer;
   const ui = Game.getChallengeUi(state.phase);
+  if (scratchEquation && !scratchEquation.dataset.initialized) {
+    scratchEquation.value = state.equation;
+    scratchEquation.dataset.initialized = 'true';
+  }
   drawing.setState(state);
   drawing.setStrokeColor(drawer === state.challengedPlayer ? '#244b74' : '#b86b1f');
   updateSharedText(state);

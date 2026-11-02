@@ -260,6 +260,28 @@ main {
     color: var(--muted);
 }
 
+.scratchpad {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.scratch-equation {
+    display: block;
+    width: 100%;
+    resize: vertical;
+    border: 1px solid var(--line);
+    padding: 12px;
+    color: var(--ink);
+    background: var(--panel);
+    font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.scratch-equation:focus-visible {
+    outline: 3px solid #8db7e1;
+    outline-offset: 2px;
+}
+
 .action.ready {
     background: #2a8f52;
     border-color: #2a8f52;

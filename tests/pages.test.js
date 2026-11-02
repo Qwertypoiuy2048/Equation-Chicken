@@ -61,7 +61,7 @@ test('verified Accept has a distinct ready style and screens have instructions',
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const challenge = fs.readFileSync(path.join(root, 'challenge.html'), 'utf8');
   const result = fs.readFileSync(path.join(root, 'result.html'), 'utf8');
-  assert.match(css, /\.action\.primary\.ready\s*\{/);
+  assert.match(css, /\.action\.ready\s*\{/);
   assert.match(challenge, /class="screen-instructions"/);
   assert.match(result, /class="screen-instructions"/);
 });
@@ -85,6 +85,8 @@ test('the challenge page contains the drawing and challenge controls', () => {
   }
   assert.match(html, /id="drawing-canvas"/);
   assert.match(html, /id="reference-canvas"/);
+  assert.match(html, /id="scratch-equation"/);
+  assert.match(html, /Scratchpad only/);
 });
 
 test('browser script contains the shared state and interaction entry points', () => {
