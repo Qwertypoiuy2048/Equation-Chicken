@@ -61,3 +61,52 @@ test('rejects equations outside the current function-graph scope', () => {
   assert.equal(EquationParser.tryCompile('y = x +'), null);
   assert.equal(EquationParser.tryCompile('y = abs(x)'), null);
 });
+
+test('counts one-token replacements, additions, and deletions', () => {
+  assert.equal(EquationParser.countTokenEdits('y = x', 'y = 2x'), 1);
+  assert.equal(EquationParser.countTokenEdits('y = x', 'y = y'), 1);
+  assert.equal(EquationParser.countTokenEdits('y = 2x', 'y = x'), 1);
+});
+
+test('ignores whitespace when counting token edits', () => {
+  assert.equal(EquationParser.countTokenEdits('y = x', ' y = x '), 0);
+});
+
+test('counts multiple token changes instead of accepting a compound edit', () => {
+  assert.equal(EquationParser.countTokenEdits('y = x', 'y = 2x + 3'), 3);
+  assert.equal(EquationParser.countTokenEdits('y = x', 'y = x^2'), 2);
+});
+
+test('allows exactly one relation in an edited equation', () => {
+  assert.equal(EquationParser.validateEdit('y = x', 'y < x').valid, true);
+  assert.equal(EquationParser.validateEdit('y = x', 'y < x = 2').valid, false);
+});
+
+test('allows adding one operator and one atom together', () => {
+  assert.equal(EquationParser.validateEdit('y = x', 'y = x+2').kind, 'operator-and-atom');
+  assert.equal(EquationParser.validateEdit('y = x', 'y = 2*x').kind, 'operator-and-atom');
+  assert.equal(EquationParser.validateEdit('y = x', 'y = x^2').kind, 'operator-and-atom');
+});
+
+test('allows adding one opening and one closing parenthesis together', () => {
+  assert.equal(EquationParser.validateEdit('y = x', 'y = (x)').kind, 'parenthesis-pair');
+});
+
+test('allows repositioning one existing parenthesis pair as its own option', () => {
+  const validation = EquationParser.validateEdit('y = x(9)', 'y = (x9)');
+  assert.equal(validation.valid, true);
+  assert.equal(validation.kind, 'parenthesis-reposition');
+});
+
+test('rejects unsupported compound additions', () => {
+  assert.equal(EquationParser.validateEdit('y = x', 'y = 2x + 3').valid, false);
+  assert.equal(EquationParser.validateEdit('y = x', 'y = ((x))').valid, false);
+  assert.equal(EquationParser.validateEdit('y = x', 'y = abs(x)').valid, false);
+});
+
+test('tracks token issues for rejected edits', () => {
+  const validation = EquationParser.validateEdit('y = x', 'y = 2x + 3');
+  assert.equal(validation.valid, false);
+  assert.ok(validation.issues.length > 0);
+  assert.ok(validation.issues.some(issue => issue.kind === 'added' || issue.kind === 'changed'));
+});

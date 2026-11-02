@@ -265,16 +265,17 @@ document.addEventListener('click', event => {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
     const candidate = editor.value.trim();
-    if (!candidate || !EquationParser.tryCompile(candidate)) {
+    const validation = candidate ? EquationParser.validateEdit(state.equation, candidate) : { valid: false, reason: 'Enter an equation before verifying.' };
+    if (!validation.valid) {
       verifiedEquation = null;
       document.querySelector('[data-action="accept-equation"]').disabled = true;
-      message.textContent = 'Enter a valid graphable equation, such as y = x or y = x^2.';
+      message.textContent = validation.reason;
       message.classList.add('error');
       return;
     }
     verifiedEquation = candidate;
     document.querySelector('[data-action="accept-equation"]').disabled = false;
-    message.textContent = 'Equation verified. Accept it to save the change.';
+    message.textContent = 'One-token edit verified. Accept it to save the change.';
     message.classList.remove('error');
     return;
   }

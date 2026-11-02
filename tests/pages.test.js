@@ -32,7 +32,7 @@ test('the turn page exposes verify and revert equation controls', () => {
   assert.match(html, /data-action="verify-equation"/);
   assert.match(html, /data-action="accept-equation"/);
   assert.match(html, /data-action="revert-equation"/);
-  assert.match(browserScript, /EquationParser\.tryCompile\(candidate\)/);
+  assert.match(browserScript, /EquationParser\.validateEdit\(state\.equation, candidate\)/);
   assert.match(browserScript, /Game\.updateEquation\(state, verifiedEquation\)/);
   assert.match(browserScript, /Game\.revertEquation\(state\)/);
 });

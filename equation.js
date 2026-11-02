@@ -113,5 +113,112 @@
     try { return compile(equation); } catch { return null; }
   }
 
-  return { tokenize, parseEquation, compile, tryCompile };
+  function tokenSignature(token) {
+    return `${token.type}:${token.value}`;
+  }
+
+  function countTokenEdits(first, second) {
+    const left = meaningfulTokens(first).map(tokenSignature);
+    const right = meaningfulTokens(second).map(tokenSignature);
+    const distances = Array.from({ length: left.length + 1 }, (_, row) => Array(right.length + 1).fill(0));
+    for (let row = 0; row <= left.length; row += 1) distances[row][0] = row;
+    for (let column = 0; column <= right.length; column += 1) distances[0][column] = column;
+    for (let row = 1; row <= left.length; row += 1) {
+      for (let column = 1; column <= right.length; column += 1) {
+        const substitution = left[row - 1] === right[column - 1] ? 0 : 1;
+        distances[row][column] = Math.min(
+          distances[row - 1][column] + 1,
+          distances[row][column - 1] + 1,
+          distances[row - 1][column - 1] + substitution
+        );
+      }
+    }
+    return distances[left.length][right.length];
+  }
+
+  function meaningfulTokens(value) {
+    return (Array.isArray(value) ? value : tokenize(value)).filter(token => token.type !== 'eof');
+  }
+
+  function sameTokens(left, right) {
+    return left.length === right.length && left.every((token, index) => tokenSignature(token) === tokenSignature(right[index]));
+  }
+
+  function canAddPair(current, candidate, predicate) {
+    if (candidate.length !== current.length + 2) return false;
+    for (let first = 0; first < candidate.length; first += 1) {
+      for (let second = first + 1; second < candidate.length; second += 1) {
+        const added = [candidate[first], candidate[second]];
+        const remaining = candidate.filter((_, index) => index !== first && index !== second);
+        if (predicate(added) && sameTokens(current, remaining)) return true;
+      }
+    }
+    return false;
+  }
+
+  function canRepositionParentheses(current, candidate) {
+    const currentParentheses = current.filter(token => token.type === '(' || token.type === ')');
+    const candidateParentheses = candidate.filter(token => token.type === '(' || token.type === ')');
+    if (currentParentheses.length !== 2 || candidateParentheses.length !== 2) return false;
+    if (currentParentheses.filter(token => token.type === '(').length !== 1 || candidateParentheses.filter(token => token.type === '(').length !== 1) return false;
+    const currentContent = current.filter(token => token.type !== '(' && token.type !== ')');
+    const candidateContent = candidate.filter(token => token.type !== '(' && token.type !== ')');
+    return sameTokens(currentContent, candidateContent) && !sameTokens(current, candidate);
+  }
+
+  function describeDifferences(current, candidate) {
+    const differences = [];
+    const limit = Math.max(current.length, candidate.length);
+    for (let index = 0; index < limit; index += 1) {
+      const oldToken = current[index];
+      const newToken = candidate[index];
+      if (!oldToken) differences.push({ kind: 'added', candidateIndex: index, token: newToken.value });
+      else if (!newToken) differences.push({ kind: 'removed', currentIndex: index, token: oldToken.value });
+      else if (tokenSignature(oldToken) !== tokenSignature(newToken)) {
+        differences.push({ kind: 'changed', currentIndex: index, candidateIndex: index, from: oldToken.value, to: newToken.value });
+      }
+    }
+    return differences;
+  }
+
+  function validateEdit(currentEquation, candidateEquation) {
+    let current;
+    let candidate;
+    try {
+      current = meaningfulTokens(currentEquation);
+      candidate = meaningfulTokens(candidateEquation);
+      parseEquation(candidateEquation);
+    } catch {
+      return { valid: false, issues: [{ kind: 'syntax', message: 'The equation syntax is invalid.' }], reason: 'The equation syntax is invalid.' };
+    }
+
+    const relationCount = candidate.filter(token => token.type === 'relation').length;
+    if (relationCount !== 1) return { valid: false, issues: [{ kind: 'relation-count', count: relationCount }], reason: 'An equation must contain exactly one relation.' };
+
+    if (canRepositionParentheses(current, candidate)) return { valid: true, edits: 2, kind: 'parenthesis-reposition', issues: [] };
+
+    const edits = countTokenEdits(current, candidate);
+    if (edits === 1) return { valid: true, edits, kind: 'single-token', issues: [] };
+
+    const operatorAndAtom = canAddPair(current, candidate, added => {
+      const operators = added.filter(token => ['+', '-', '*', '/', '^'].includes(token.type));
+      const atoms = added.filter(token => ['number', 'constant', 'variable'].includes(token.type));
+      return operators.length === 1 && atoms.length === 1;
+    });
+    if (operatorAndAtom) return { valid: true, edits, kind: 'operator-and-atom', issues: [] };
+
+    const parenthesisPair = canAddPair(current, candidate, added => {
+      return added.filter(token => token.type === '(').length === 1 && added.filter(token => token.type === ')').length === 1;
+    });
+    if (parenthesisPair) return { valid: true, edits, kind: 'parenthesis-pair', issues: [] };
+
+    return {
+      valid: false,
+      edits,
+      issues: describeDifferences(current, candidate),
+      reason: 'Only one token, one operator plus one atom, one matching parenthesis pair, or one parenthesis reposition may be added.'
+    };
+  }
+
+  return { tokenize, parseEquation, compile, tryCompile, countTokenEdits, validateEdit };
 });
