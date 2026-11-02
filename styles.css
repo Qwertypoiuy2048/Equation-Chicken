@@ -317,6 +317,18 @@ main {
     background-size: 32px 32px;
 }
 
+#graph-sketch,
+#final-graph-sketch {
+    position: absolute;
+    inset: 0;
+}
+
+.p5-graph-canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .drawing-canvas {
     position: absolute;
     inset: 0;

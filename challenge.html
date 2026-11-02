@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="styles.css">
   <script src="equation.js" defer></script>
   <script src="game-state.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js" defer></script>
+  <script src="graph-sketch.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -35,10 +37,7 @@
         <p class="screen-instructions">Draw the equation on the coordinate grid. Submit when finished; the reference graph stays hidden until judgment.</p>
         <div class="graph-wrap">
           <div id="drawing-board" class="graph" role="img" aria-label="Coordinate grid for drawing a graph">
-            <span class="axis-x"></span><span class="axis-y"></span>
-            <span class="axis-label x">x</span><span class="axis-label y">y</span>
-            <canvas id="reference-canvas" class="reference-canvas" aria-label="Computer reference graph" hidden></canvas>
-            <canvas id="drawing-canvas" class="drawing-canvas" aria-label="Drawing canvas"></canvas>
+            <div id="graph-sketch" aria-label="Drawing canvas"></div>
             <span id="frozen-label" class="frozen-label" hidden>Drawing submitted · frozen for judgment</span>
           </div>
         </div>

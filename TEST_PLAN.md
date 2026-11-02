@@ -11,7 +11,7 @@ The initial automated suite is now available under `tests/` and runs with:
 npm test
 ```
 
-It currently covers the game-state transitions, scoring/reset behavior, required page assets and controls, and the shared browser-script contract.
+It currently covers the game-state transitions, scoring/reset behavior, required page assets and controls, and the shared browser-script/p5 sketch contract.
 
 Equation editing also has separate coverage for verify-without-save, accept-and-history, and revert-to-turn-start behavior.
 

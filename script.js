@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'equation-chicken-state';
 const canvasControllers = new WeakMap();
+let challengeGraphSketch = null;
+let finalGraphSketch = null;
 const Game = typeof EquationChicken === 'object' ? EquationChicken : null;
 const DEFAULT_STATE = Game ? Game.DEFAULT_STATE : {};
 let verifiedEquation = null;
@@ -198,13 +200,10 @@ function drawPlayerStrokes(canvas, drawings) {
 }
 
 function renderFinalJudgmentGraph(state) {
-  const referenceCanvas = document.querySelector('#final-reference-canvas');
-  const drawingCanvas = document.querySelector('#final-drawing-canvas');
-  if (!referenceCanvas || !drawingCanvas) return;
-  referenceCanvas.hidden = false;
-  drawingCanvas.hidden = false;
-  drawReferenceGraph(referenceCanvas, state.equation);
-  drawPlayerStrokes(drawingCanvas, state.drawings);
+  const host = document.querySelector('#final-graph-sketch');
+  if (!host || typeof EquationGraph !== 'object') return;
+  if (!finalGraphSketch) finalGraphSketch = EquationGraph.createGraphSketch(host, { mode: 'comparison' });
+  finalGraphSketch.update({ equation: state.equation, drawings: state.drawings, referenceVisible: true, frozen: true, mode: 'comparison' });
 }
 
 function renderTurnPage(state) {
@@ -240,20 +239,17 @@ function renderEquationPreview(equation, issues = [], status = 'normal', changes
 }
 
 function renderChallengePage(state) {
-  const canvas = document.querySelector('#drawing-canvas');
   const board = document.querySelector('#drawing-board');
   const drawActions = document.querySelector('#draw-actions');
   const judgeActions = document.querySelector('#judge-actions');
   const rejectActions = document.querySelector('#reject-actions');
   const acceptedActions = document.querySelector('#accepted-actions');
   const frozenLabel = document.querySelector('#frozen-label');
-  const referenceCanvas = document.querySelector('#reference-canvas');
+  const graphHost = document.querySelector('#graph-sketch');
   const title = document.querySelector('#challenge-title');
   const status = document.querySelector('#challenge-status');
   const hint = document.querySelector('#graph-hint');
   const scratchEquation = document.querySelector('#scratch-equation');
-  const drawing = setupCanvas(canvas, state);
-
   if (!state.challengedPlayer) startChallenge(state);
   const drawer = state.drawer || state.challengedPlayer;
   const ui = Game.getChallengeUi(state.phase);
@@ -261,8 +257,16 @@ function renderChallengePage(state) {
     scratchEquation.value = state.equation;
     scratchEquation.dataset.initialized = 'true';
   }
-  drawing.setState(state);
-  drawing.setStrokeColor(drawer === state.challengedPlayer ? '#244b74' : '#b86b1f');
+  if (graphHost && typeof EquationGraph === 'object') {
+    if (!challengeGraphSketch) {
+      challengeGraphSketch = EquationGraph.createGraphSketch(graphHost, {
+        mode: 'drawing',
+        onStroke(stroke) { state.drawings.push(stroke); saveState(state); },
+        onClear(player) { state.drawings = state.drawings.filter(stroke => stroke.player !== player); saveState(state); }
+      });
+    }
+    challengeGraphSketch.update({ equation: state.equation, drawings: state.drawings, activePlayer: drawer, challengedPlayer: state.challengedPlayer, frozen: ui.frozen, referenceVisible: ui.referenceVisible, mode: 'drawing' });
+  }
   updateSharedText(state);
   title.innerHTML = `${playerName(drawer)} must graph: <code>${state.equation}</code>`;
   status.textContent = state.drawingSubmitted ? 'Judgment phase' : (drawer !== state.challengedPlayer ? 'Counter-challenge' : 'Challenge phase');
@@ -271,17 +275,12 @@ function renderChallengePage(state) {
   judgeActions.hidden = !ui.judgeActions;
   rejectActions.hidden = !ui.rejectActions;
   acceptedActions.hidden = !ui.acceptedActions;
-  referenceCanvas.hidden = !ui.referenceVisible;
-  if (ui.referenceVisible) drawReferenceGraph(referenceCanvas, state.equation);
-
   if (ui.frozen) {
     board.classList.add('is-frozen');
-    drawing.freeze();
     frozenLabel.hidden = false;
     hint.textContent = state.phase === 'accepted' ? 'Reference graph is green. Both player drawings remain visible.' : 'Drawing is frozen. The reference graph remains hidden until accepted.';
   } else {
     board.classList.remove('is-frozen');
-    drawing.unfreeze();
     frozenLabel.hidden = true;
     hint.textContent = 'Reference graph is hidden until judgment.';
   }
@@ -395,13 +394,9 @@ document.addEventListener('click', event => {
     return;
   }
 
-  const canvas = document.querySelector('#drawing-canvas');
-  const board = document.querySelector('#drawing-board');
-  const drawing = setupCanvas(canvas, state);
+  if (target.dataset.action === 'clear-drawing' && challengeGraphSketch) challengeGraphSketch.clearCurrent();
 
-  if (target.dataset.action === 'clear-drawing' && drawing) drawing.clear();
-
-  if (target.dataset.action === 'submit-drawing' && drawing) {
+  if (target.dataset.action === 'submit-drawing') {
     Game.submitDrawing(state);
     saveState(state);
     if (state.phase === 'final-judgment') {

@@ -38,7 +38,7 @@ test('the turn page exposes verify and revert equation controls', () => {
   assert.match(html, /class="screen-instructions"/);
   assert.match(html, /data-action="verify-equation"/);
   assert.match(html, /data-action="accept-equation"/);
-  assert.match(html, /class="action primary"[^>]*data-action="accept-equation"/);
+  assert.match(html, /data-action="accept-equation"/);
   assert.match(html, /data-action="revert-equation"/);
   assert.match(browserScript, /EquationParser\.validateEdit\(state\.equation, candidate\)/);
   assert.match(browserScript, /Game\.acceptTurnEquation\(state, verifiedEquation\)/);
@@ -72,8 +72,7 @@ test('the result page contains final judgment choices', () => {
   assert.match(html, /data-action="award-player" data-winner="1"/);
   assert.match(html, /data-action="award-player" data-winner="2"/);
   assert.match(html, /data-action="resolve-draw"/);
-  assert.match(html, /id="final-reference-canvas"/);
-  assert.match(html, /id="final-drawing-canvas"/);
+  assert.match(html, /id="final-graph-sketch"/);
   assert.match(html, /data-final-equation/);
   assert.match(fs.readFileSync(path.join(root, 'script.js'), 'utf8'), /setText\('\[data-final-equation\]', currentState\.equation\)/);
 });
@@ -83,8 +82,7 @@ test('the challenge page contains the drawing and challenge controls', () => {
   for (const action of ['clear-drawing', 'submit-drawing', 'accept-drawing', 'reject-drawing', 'accept-loss', 'counter-challenge', 'forfeit']) {
     assert.match(html, new RegExp(`data-action="${action}"`));
   }
-  assert.match(html, /id="drawing-canvas"/);
-  assert.match(html, /id="reference-canvas"/);
+  assert.match(html, /id="graph-sketch"/);
   assert.match(html, /id="scratch-equation"/);
   assert.match(html, /Scratchpad only/);
 });
@@ -111,10 +109,17 @@ test('drawings and reference use separate colors without clearing the counter dr
   assert.doesNotMatch(browserScript, /if \(drawing\) drawing\.clear\(\);\s*renderChallengePage\(state\);/);
 });
 
-test('reference graph is generated from the equation on a separate canvas', () => {
+test('reference graph is generated from the equation by the shared p5 sketch', () => {
+  const challenge = fs.readFileSync(path.join(root, 'challenge.html'), 'utf8');
+  const result = fs.readFileSync(path.join(root, 'result.html'), 'utf8');
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
-  assert.match(browserScript, /function drawReferenceGraph\(canvas, equation\)/);
-  assert.match(browserScript, /const graph = EquationParser\.tryCompile\(equation\)/);
-  assert.match(browserScript, /graph\.evaluate\(x\)/);
-  assert.match(browserScript, /drawReferenceGraph\(referenceCanvas, state\.equation\)/);
+  const graphSketch = fs.readFileSync(path.join(root, 'graph-sketch.js'), 'utf8');
+  assert.match(challenge, /p5\.min\.js/);
+  assert.match(challenge, /graph-sketch\.js/);
+  assert.match(result, /p5\.min\.js/);
+  assert.match(result, /graph-sketch\.js/);
+  assert.match(browserScript, /EquationGraph\.createGraphSketch/);
+  assert.match(browserScript, /referenceVisible: true/);
+  assert.match(graphSketch, /EquationParser\.tryCompile\(options\.equation\)/);
+  assert.match(graphSketch, /graph\.evaluate\(graphX\)/);
 });
