@@ -7,6 +7,7 @@ test('creates a new match with the expected defaults', () => {
   assert.equal(state.match, 1);
   assert.equal(state.currentPlayer, 1);
   assert.equal(state.equation, 'y = x');
+  assert.deepEqual(state.bounds, { xMin: -10, xMax: 10, yMin: -10, yMax: 10 });
   assert.deepEqual(state.history, ['y = x']);
   assert.deepEqual(state.scores, { 1: 0, 2: 0 });
   assert.equal(state.phase, 'turn');
@@ -54,6 +55,24 @@ test('accepting an equation ends the turn and changes the active player', () => 
   assert.equal(state.phase, 'turn');
   assert.equal(state.turnStartEquation, 'y = x^2');
   assert.deepEqual(state.turnStartHistory, ['y = x', 'y = x^2']);
+});
+
+test('accepting a boundary edit ends the turn and preserves the new bounds', () => {
+  const state = Game.createState();
+  Game.acceptTurnBounds(state, { xMin: -20, xMax: 10, yMin: -10, yMax: 10 });
+  assert.deepEqual(state.bounds, { xMin: -20, xMax: 10, yMin: -10, yMax: 10 });
+  assert.equal(state.currentPlayer, 2);
+  assert.deepEqual(state.turnStartBounds, state.bounds);
+  assert.equal(state.equation, 'y = x');
+});
+
+test('revert restores both equation and boundaries from the turn start', () => {
+  const state = Game.createState({ bounds: { xMin: -20, xMax: 10, yMin: -10, yMax: 10 } });
+  state.bounds.xMin = -5;
+  Game.updateEquation(state, 'y = x^2');
+  Game.revertEquation(state);
+  assert.equal(state.equation, 'y = x');
+  assert.deepEqual(state.bounds, { xMin: -20, xMax: 10, yMin: -10, yMax: 10 });
 });
 
 test('challenge transitions preserve the shared equation', () => {

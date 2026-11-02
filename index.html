@@ -44,8 +44,20 @@
           <p id="equation-message" class="equation-message" role="status" aria-live="polite"></p>
           <div class="actions"><button class="action primary" type="button" data-action="verify-equation">Verify</button><button class="action" type="button" data-action="accept-equation" disabled>Accept</button><button class="action" type="button" data-action="revert-equation">Revert</button></div>
         </section>
+        <section id="bounds-actions" class="equation-editor-panel" hidden>
+          <div class="equation-editor-label">Edit graph bounds</div>
+          <p class="hint">Change exactly one boundary. The equation cannot be edited in the same turn.</p>
+          <div class="turn-bounds-editor" aria-label="Graph boundary editor">
+            <label>x min <input id="turn-x-min" type="number" step="any"></label>
+            <label>x max <input id="turn-x-max" type="number" step="any"></label>
+            <label>y min <input id="turn-y-min" type="number" step="any"></label>
+            <label>y max <input id="turn-y-max" type="number" step="any"></label>
+          </div>
+          <p id="bounds-message" class="equation-message" role="status" aria-live="polite"></p>
+          <div class="actions"><button class="action primary" type="button" data-action="verify-bounds">Verify</button><button class="action" type="button" data-action="accept-bounds" disabled>Accept</button><button class="action" type="button" data-action="revert-bounds">Revert</button></div>
+        </section>
         <p class="banned"><strong>Banned this match:</strong> 4, ^</p>
-        <div id="turn-actions" class="actions"><button class="action" type="button" data-action="start-edit">Alter equation</button><a class="action primary" href="challenge.html" data-action="start-challenge">Challenge the other player</a></div>
+        <div id="turn-actions" class="actions"><button class="action" type="button" data-action="start-edit">Alter equation</button><button class="action" type="button" data-action="start-bounds">Alter graph bounds</button><a class="action primary" href="challenge.html" data-action="start-challenge">Challenge the other player</a></div>
         <p class="history"><strong>Equation history:</strong> <span data-equation-history>y = x</span></p>
       </section>
     </main>

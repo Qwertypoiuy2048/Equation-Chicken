@@ -7,8 +7,10 @@
     match: 1,
     currentPlayer: 1,
     equation: 'y = x',
+    bounds: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
     history: ['y = x'],
     turnStartEquation: 'y = x',
+    turnStartBounds: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
     turnStartHistory: ['y = x'],
     scores: { 1: 0, 2: 0 },
     phase: 'turn',
@@ -30,13 +32,17 @@
       ...DEFAULT_STATE,
       ...overrides,
       equation,
+      bounds: { ...DEFAULT_STATE.bounds, ...(overrides.bounds || {}) },
       history,
       turnStartEquation: overrides.turnStartEquation || equation,
+      turnStartBounds: { ...DEFAULT_STATE.bounds, ...(overrides.turnStartBounds || overrides.bounds || {}) },
       turnStartHistory: [...(overrides.turnStartHistory || history)],
       scores: { ...DEFAULT_STATE.scores, ...(overrides.scores || {}) },
       drawings: (overrides.drawings || DEFAULT_STATE.drawings).map(stroke => ({
         player: stroke.player,
         color: stroke.color,
+        tool: stroke.tool,
+        coordinateSpace: stroke.coordinateSpace,
         points: stroke.points.map(point => ({ x: point.x, y: point.y }))
       }))
     };
@@ -94,6 +100,7 @@
 
   function revertEquation(state) {
     state.equation = state.turnStartEquation;
+    state.bounds = { ...state.turnStartBounds };
     state.history = [...state.turnStartHistory];
     return state;
   }
@@ -102,6 +109,17 @@
     updateEquation(state, equation);
     state.currentPlayer = otherPlayer(state.currentPlayer);
     state.turnStartEquation = state.equation;
+    state.turnStartBounds = { ...state.bounds };
+    state.turnStartHistory = [...state.history];
+    state.phase = 'turn';
+    return state;
+  }
+
+  function acceptTurnBounds(state, bounds) {
+    state.bounds = { ...bounds };
+    state.currentPlayer = otherPlayer(state.currentPlayer);
+    state.turnStartEquation = state.equation;
+    state.turnStartBounds = { ...state.bounds };
     state.turnStartHistory = [...state.history];
     state.phase = 'turn';
     return state;
@@ -156,6 +174,7 @@
     updateEquation,
     revertEquation,
     acceptTurnEquation,
+    acceptTurnBounds,
     finishMatch,
     resolveDraw,
     nextMatch,

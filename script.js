@@ -3,9 +3,12 @@ const canvasControllers = new WeakMap();
 let challengeGraphSketch = null;
 let finalGraphSketch = null;
 let activeDrawingTool = 'freehand';
+let challengeBounds = { xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
+let challengeViewInitialized = false;
 const Game = typeof EquationChicken === 'object' ? EquationChicken : null;
 const DEFAULT_STATE = Game ? Game.DEFAULT_STATE : {};
 let verifiedEquation = null;
+let verifiedTurnEdit = null;
 
 function loadState() {
   try {
@@ -31,6 +34,37 @@ function equationExpression(equation) {
 
 function makeEquation(expression) {
   return expression ? `y = ${expression}` : '';
+}
+
+function readGraphBounds() {
+  const values = ['x-min', 'x-max', 'y-min', 'y-max'].map(id => Number(document.querySelector(`#${id}`)?.value));
+  if (values.some(value => !Number.isFinite(value))) return { valid: false, reason: 'All graph bounds must be numbers.' };
+  const [xMin, xMax, yMin, yMax] = values;
+  if (xMin >= xMax || yMin >= yMax) return { valid: false, reason: 'Each minimum must be smaller than its maximum.' };
+  return { valid: true, bounds: { xMin, xMax, yMin, yMax } };
+}
+
+function readTurnBounds() {
+  const values = ['turn-x-min', 'turn-x-max', 'turn-y-min', 'turn-y-max'].map(id => Number(document.querySelector(`#${id}`)?.value));
+  if (values.some(value => !Number.isFinite(value))) return { valid: false, reason: 'All graph boundaries must be numbers.' };
+  const [xMin, xMax, yMin, yMax] = values;
+  if (xMin >= xMax || yMin >= yMax) return { valid: false, reason: 'Each boundary minimum must be smaller than its maximum.' };
+  return { valid: true, bounds: { xMin, xMax, yMin, yMax } };
+}
+
+function sameBounds(first, second) {
+  return ['xMin', 'xMax', 'yMin', 'yMax'].every(key => first[key] === second[key]);
+}
+
+function changedBounds(first, second) {
+  return ['xMin', 'xMax', 'yMin', 'yMax'].filter(key => first[key] !== second[key]);
+}
+
+function setTurnBounds(bounds) {
+  ['turn-x-min', 'turn-x-max', 'turn-y-min', 'turn-y-max'].forEach((id, index) => {
+    const input = document.querySelector(`#${id}`);
+    if (input) input.value = [bounds.xMin, bounds.xMax, bounds.yMin, bounds.yMax][index];
+  });
 }
 
 function otherPlayer(player) {
@@ -204,7 +238,7 @@ function renderFinalJudgmentGraph(state) {
   const host = document.querySelector('#final-graph-sketch');
   if (!host || typeof EquationGraph !== 'object') return;
   if (!finalGraphSketch) finalGraphSketch = EquationGraph.createGraphSketch(host, { mode: 'comparison' });
-  finalGraphSketch.update({ equation: state.equation, drawings: state.drawings, referenceVisible: true, frozen: true, mode: 'comparison' });
+  finalGraphSketch.update({ equation: state.equation, drawings: state.drawings, bounds: state.bounds, referenceVisible: true, frozen: true, mode: 'comparison' });
 }
 
 function renderTurnPage(state) {
@@ -212,18 +246,27 @@ function renderTurnPage(state) {
   setTurnEditing(false);
   const editor = document.querySelector('#equation-editor');
   const accept = document.querySelector('[data-action="accept-equation"]');
+  const boundsAccept = document.querySelector('[data-action="accept-bounds"]');
   if (editor) editor.value = equationExpression(state.equation);
+  setTurnBounds(state.bounds);
   if (accept) accept.disabled = true;
   if (accept) accept.classList.remove('ready');
+  if (boundsAccept) {
+    boundsAccept.disabled = true;
+    boundsAccept.classList.remove('ready');
+  }
   verifiedEquation = null;
+  verifiedTurnEdit = null;
   renderEquationPreview(state.equation);
 }
 
 function setTurnEditing(editing) {
   const turnActions = document.querySelector('#turn-actions');
   const editActions = document.querySelector('#edit-actions');
-  if (turnActions) turnActions.hidden = editing;
-  if (editActions) editActions.hidden = !editing;
+  const boundsActions = document.querySelector('#bounds-actions');
+  if (turnActions) turnActions.hidden = Boolean(editing);
+  if (editActions) editActions.hidden = editing !== 'equation';
+  if (boundsActions) boundsActions.hidden = editing !== 'bounds';
 }
 
 function renderEquationPreview(equation, issues = [], status = 'normal', changes = []) {
@@ -251,6 +294,10 @@ function renderChallengePage(state) {
   const status = document.querySelector('#challenge-status');
   const hint = document.querySelector('#graph-hint');
   const scratchEquation = document.querySelector('#scratch-equation');
+  if (!challengeViewInitialized) {
+    challengeBounds = { ...state.bounds };
+    challengeViewInitialized = true;
+  }
   if (!state.challengedPlayer) startChallenge(state);
   const drawer = state.drawer || state.challengedPlayer;
   const ui = Game.getChallengeUi(state.phase);
@@ -258,6 +305,10 @@ function renderChallengePage(state) {
     scratchEquation.value = state.equation;
     scratchEquation.dataset.initialized = 'true';
   }
+  ['x-min', 'x-max', 'y-min', 'y-max'].forEach((id, index) => {
+    const input = document.querySelector(`#${id}`);
+    if (input && document.activeElement !== input) input.value = [challengeBounds.xMin, challengeBounds.xMax, challengeBounds.yMin, challengeBounds.yMax][index];
+  });
   if (graphHost && typeof EquationGraph === 'object') {
     if (!challengeGraphSketch) {
       challengeGraphSketch = EquationGraph.createGraphSketch(graphHost, {
@@ -283,12 +334,14 @@ function renderChallengePage(state) {
       referenceVisible: ui.referenceVisible,
       mode: 'drawing',
       tool: activeDrawingTool,
+      bounds: challengeBounds,
       onStroke(stroke) {
         if (stroke.tool !== 'plotter' || state.drawings[state.drawings.length - 1] !== stroke) state.drawings.push(stroke);
         saveState(state);
       },
       onClear(player) {
-        state.drawings = state.drawings.filter(stroke => stroke.player !== player);
+        const remaining = state.drawings.filter(stroke => stroke.player !== player);
+        state.drawings.splice(0, state.drawings.length, ...remaining);
         saveState(state);
       },
       onUndo(player) {
@@ -334,6 +387,19 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.action === 'apply-view') {
+    const result = readGraphBounds();
+    const message = document.querySelector('#view-message');
+    if (!result.valid) {
+      if (message) message.textContent = result.reason;
+      return;
+    }
+    challengeBounds = result.bounds;
+    if (message) message.textContent = `View: x ${challengeBounds.xMin}…${challengeBounds.xMax}, y ${challengeBounds.yMin}…${challengeBounds.yMax}`;
+    renderChallengePage(state);
+    return;
+  }
+
   if (target.dataset.tool) {
     activeDrawingTool = target.dataset.tool;
     if (challengeGraphSketch) challengeGraphSketch.update({ tool: activeDrawingTool });
@@ -348,7 +414,9 @@ document.addEventListener('click', event => {
   if (target.dataset.action === 'start-edit') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
-    setTurnEditing(true);
+    setTurnEditing('equation');
+    verifiedEquation = null;
+    verifiedTurnEdit = null;
     editor.value = equationExpression(state.equation);
     message.textContent = '';
     message.classList.remove('error');
@@ -357,13 +425,26 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.action === 'start-bounds') {
+    const message = document.querySelector('#bounds-message');
+    setTurnEditing('bounds');
+    verifiedEquation = null;
+    verifiedTurnEdit = null;
+    setTurnBounds(state.bounds);
+    message.textContent = '';
+    message.classList.remove('error');
+    return;
+  }
+
   if (target.dataset.action === 'verify-equation') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
     const candidate = makeEquation(editor.value.trim());
-    const validation = candidate ? EquationParser.validateEdit(state.equation, candidate) : { valid: false, reason: 'Enter an equation before verifying.' };
+    const equationChanged = candidate !== state.equation;
+    const validation = equationChanged ? EquationParser.validateEdit(state.equation, candidate) : { valid: false, reason: 'Make one equation change before verifying.' };
     if (!validation.valid) {
       verifiedEquation = null;
+      verifiedTurnEdit = null;
       const accept = document.querySelector('[data-action="accept-equation"]');
       accept.disabled = true;
       accept.classList.remove('ready');
@@ -373,6 +454,7 @@ document.addEventListener('click', event => {
       return;
     }
     verifiedEquation = candidate;
+    verifiedTurnEdit = null;
     const accept = document.querySelector('[data-action="accept-equation"]');
     accept.disabled = false;
     accept.classList.add('ready');
@@ -382,17 +464,78 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.action === 'verify-bounds') {
+    const message = document.querySelector('#bounds-message');
+    const validation = readTurnBounds();
+    if (!validation.valid) {
+      verifiedEquation = null;
+      verifiedTurnEdit = null;
+      const accept = document.querySelector('[data-action="accept-bounds"]');
+      accept.disabled = true;
+      accept.classList.remove('ready');
+      message.textContent = validation.reason;
+      message.classList.add('error');
+      return;
+    }
+    const changed = changedBounds(validation.bounds, state.bounds);
+    if (changed.length === 0) {
+      verifiedEquation = null;
+      verifiedTurnEdit = null;
+      const accept = document.querySelector('[data-action="accept-bounds"]');
+      accept.disabled = true;
+      accept.classList.remove('ready');
+      message.textContent = 'Change one graph boundary before verifying.';
+      message.classList.add('error');
+      return;
+    }
+    if (changed.length !== 1) {
+      verifiedEquation = null;
+      verifiedTurnEdit = null;
+      const accept = document.querySelector('[data-action="accept-bounds"]');
+      accept.disabled = true;
+      accept.classList.remove('ready');
+      message.textContent = 'Change exactly one graph boundary at a time.';
+      message.classList.add('error');
+      return;
+    }
+    verifiedEquation = null;
+    verifiedTurnEdit = validation.bounds;
+    const accept = document.querySelector('[data-action="accept-bounds"]');
+    accept.disabled = false;
+    accept.classList.add('ready');
+    message.textContent = 'Graph boundary edit verified. Accept it to save the change.';
+    message.classList.remove('error');
+    return;
+  }
+
   if (target.dataset.action === 'accept-equation') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
     if (!verifiedEquation || verifiedEquation !== makeEquation(editor.value.trim())) {
-      message.textContent = 'Verify this equation before accepting it.';
+      message.textContent = 'Verify the equation before accepting it.';
       message.classList.add('error');
       return;
     }
     Game.acceptTurnEquation(state, verifiedEquation);
     saveState(state);
     verifiedEquation = null;
+    verifiedTurnEdit = null;
+    navigate('index.html');
+    return;
+  }
+
+  if (target.dataset.action === 'accept-bounds') {
+    const message = document.querySelector('#bounds-message');
+    const currentBounds = readTurnBounds();
+    if (!verifiedTurnEdit || !currentBounds.valid || !sameBounds(verifiedTurnEdit, currentBounds.bounds)) {
+      message.textContent = 'Verify the boundary change before accepting it.';
+      message.classList.add('error');
+      return;
+    }
+    Game.acceptTurnBounds(state, verifiedTurnEdit);
+    saveState(state);
+    verifiedEquation = null;
+    verifiedTurnEdit = null;
     navigate('index.html');
     return;
   }
@@ -403,13 +546,31 @@ document.addEventListener('click', event => {
     Game.revertEquation(state);
     saveState(state);
     editor.value = equationExpression(state.equation);
+    setTurnBounds(state.bounds);
     const accept = document.querySelector('[data-action="accept-equation"]');
     accept.disabled = true;
     accept.classList.remove('ready');
     verifiedEquation = null;
+    verifiedTurnEdit = null;
     message.textContent = 'Equation reverted to the start of the turn.';
     message.classList.remove('error');
     renderEquationPreview(state.equation);
+    setTurnEditing(false);
+    return;
+  }
+
+  if (target.dataset.action === 'revert-bounds') {
+    const message = document.querySelector('#bounds-message');
+    Game.revertEquation(state);
+    saveState(state);
+    setTurnBounds(state.bounds);
+    const accept = document.querySelector('[data-action="accept-bounds"]');
+    accept.disabled = true;
+    accept.classList.remove('ready');
+    verifiedEquation = null;
+    verifiedTurnEdit = null;
+    message.textContent = 'Graph bounds reverted to the start of the turn.';
+    message.classList.remove('error');
     setTurnEditing(false);
     return;
   }

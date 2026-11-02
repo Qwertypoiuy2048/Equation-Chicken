@@ -42,6 +42,15 @@
           </div>
         </div>
 
+        <div class="graph-view-controls" aria-label="Graph bounds">
+          <label>x min <input id="x-min" type="number" value="-10" step="any"></label>
+          <label>x max <input id="x-max" type="number" value="10" step="any"></label>
+          <label>y min <input id="y-min" type="number" value="-10" step="any"></label>
+          <label>y max <input id="y-max" type="number" value="10" step="any"></label>
+          <button class="action" type="button" data-action="apply-view">Apply view</button>
+          <span id="view-message" class="hint" role="status" aria-live="polite"></span>
+        </div>
+
         <div class="graph-footer">
           <span id="graph-hint" class="hint">Reference graph is hidden until judgment.</span>
           <div id="draw-actions" class="actions">
