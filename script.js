@@ -204,6 +204,20 @@ function renderTurnPage(state) {
   if (editor) editor.value = state.equation;
   if (accept) accept.disabled = true;
   verifiedEquation = null;
+  renderEquationPreview(state.equation);
+}
+
+function renderEquationPreview(equation, issues = [], status = 'normal', changes = []) {
+  const preview = document.querySelector('#equation-preview');
+  if (!preview || typeof EquationParser !== 'object') return;
+  preview.replaceChildren();
+  for (const token of EquationParser.annotateTokens(equation, issues, status, changes)) {
+    const span = document.createElement('span');
+    span.textContent = token.value;
+    if (token.problematic) span.className = 'problem-token';
+    else if (token.valid) span.className = 'valid-token';
+    preview.appendChild(span);
+  }
 }
 
 function renderChallengePage(state) {
@@ -271,12 +285,14 @@ document.addEventListener('click', event => {
       document.querySelector('[data-action="accept-equation"]').disabled = true;
       message.textContent = validation.reason;
       message.classList.add('error');
+      renderEquationPreview(candidate, validation.issues);
       return;
     }
     verifiedEquation = candidate;
     document.querySelector('[data-action="accept-equation"]').disabled = false;
     message.textContent = 'One-token edit verified. Accept it to save the change.';
     message.classList.remove('error');
+    renderEquationPreview(candidate, [], 'valid', validation.changes);
     return;
   }
 
@@ -294,6 +310,7 @@ document.addEventListener('click', event => {
     verifiedEquation = null;
     message.textContent = 'Equation accepted and saved.';
     message.classList.remove('error');
+    renderEquationPreview(state.equation, [], 'valid', []);
     return;
   }
 
@@ -307,6 +324,7 @@ document.addEventListener('click', event => {
     verifiedEquation = null;
     message.textContent = 'Equation reverted to the start of the turn.';
     message.classList.remove('error');
+    renderEquationPreview(state.equation);
     return;
   }
 
@@ -374,6 +392,10 @@ document.addEventListener('click', event => {
     saveState(state);
     renderChallengePage(state);
   }
+});
+
+document.addEventListener('input', event => {
+  if (event.target.id === 'equation-editor') renderEquationPreview(event.target.value);
 });
 
 const state = loadState();

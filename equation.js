@@ -156,6 +156,37 @@
     return false;
   }
 
+  function findAddedPair(current, candidate, predicate) {
+    if (candidate.length !== current.length + 2) return null;
+    for (let first = 0; first < candidate.length; first += 1) {
+      for (let second = first + 1; second < candidate.length; second += 1) {
+        const added = [candidate[first], candidate[second]];
+        const remaining = candidate.filter((_, index) => index !== first && index !== second);
+        if (predicate(added) && sameTokens(current, remaining)) return [first, second];
+      }
+    }
+    return null;
+  }
+
+  function candidateChangeIndexes(current, candidate) {
+    if (current.length === candidate.length) {
+      return candidate.map((token, index) => tokenSignature(token) !== tokenSignature(current[index]) ? index : -1).filter(index => index >= 0);
+    }
+    if (candidate.length === current.length + 1) {
+      for (let index = 0; index < candidate.length; index += 1) {
+        if (sameTokens(current, candidate.filter((_, candidateIndex) => candidateIndex !== index))) return [index];
+      }
+    }
+    if (candidate.length === current.length + 2) {
+      for (let first = 0; first < candidate.length; first += 1) {
+        for (let second = first + 1; second < candidate.length; second += 1) {
+          if (sameTokens(current, candidate.filter((_, index) => index !== first && index !== second))) return [first, second];
+        }
+      }
+    }
+    return [];
+  }
+
   function canRepositionParentheses(current, candidate) {
     const currentParentheses = current.filter(token => token.type === '(' || token.type === ')');
     const candidateParentheses = candidate.filter(token => token.type === '(' || token.type === ')');
@@ -195,22 +226,22 @@
     const relationCount = candidate.filter(token => token.type === 'relation').length;
     if (relationCount !== 1) return { valid: false, issues: [{ kind: 'relation-count', count: relationCount }], reason: 'An equation must contain exactly one relation.' };
 
-    if (canRepositionParentheses(current, candidate)) return { valid: true, edits: 2, kind: 'parenthesis-reposition', issues: [] };
+    if (canRepositionParentheses(current, candidate)) return { valid: true, edits: 2, kind: 'parenthesis-reposition', issues: [], changes: candidate.map((token, index) => token.type === '(' || token.type === ')' ? index : -1).filter(index => index >= 0) };
 
     const edits = countTokenEdits(current, candidate);
-    if (edits === 1) return { valid: true, edits, kind: 'single-token', issues: [] };
+    if (edits === 1) return { valid: true, edits, kind: 'single-token', issues: [], changes: candidateChangeIndexes(current, candidate) };
 
     const operatorAndAtom = canAddPair(current, candidate, added => {
       const operators = added.filter(token => ['+', '-', '*', '/', '^'].includes(token.type));
       const atoms = added.filter(token => ['number', 'constant', 'variable'].includes(token.type));
       return operators.length === 1 && atoms.length === 1;
     });
-    if (operatorAndAtom) return { valid: true, edits, kind: 'operator-and-atom', issues: [] };
+    if (operatorAndAtom) return { valid: true, edits, kind: 'operator-and-atom', issues: [], changes: candidateChangeIndexes(current, candidate) };
 
     const parenthesisPair = canAddPair(current, candidate, added => {
       return added.filter(token => token.type === '(').length === 1 && added.filter(token => token.type === ')').length === 1;
     });
-    if (parenthesisPair) return { valid: true, edits, kind: 'parenthesis-pair', issues: [] };
+    if (parenthesisPair) return { valid: true, edits, kind: 'parenthesis-pair', issues: [], changes: candidateChangeIndexes(current, candidate) };
 
     return {
       valid: false,
@@ -220,5 +251,17 @@
     };
   }
 
-  return { tokenize, parseEquation, compile, tryCompile, countTokenEdits, validateEdit };
+  function annotateTokens(equation, issues = [], status = 'normal', changes = []) {
+    const highlighted = new Set();
+    for (const issue of issues) {
+      if (Number.isInteger(issue.candidateIndex)) highlighted.add(issue.candidateIndex);
+    }
+    return meaningfulTokens(equation).map((token, index) => ({
+      ...token,
+      problematic: highlighted.has(index),
+      valid: status === 'valid' && changes.includes(index)
+    }));
+  }
+
+  return { tokenize, parseEquation, compile, tryCompile, countTokenEdits, validateEdit, annotateTokens };
 });

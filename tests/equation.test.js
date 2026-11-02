@@ -110,3 +110,17 @@ test('tracks token issues for rejected edits', () => {
   assert.ok(validation.issues.length > 0);
   assert.ok(validation.issues.some(issue => issue.kind === 'added' || issue.kind === 'changed'));
 });
+
+test('annotates candidate tokens identified by validation issues', () => {
+  const validation = EquationParser.validateEdit('y = x', 'y = 2x + 3');
+  const tokens = EquationParser.annotateTokens('y = 2x + 3', validation.issues);
+  assert.ok(tokens.some(token => token.problematic));
+  assert.equal(tokens.filter(token => token.problematic).length, validation.issues.filter(issue => Number.isInteger(issue.candidateIndex)).length);
+});
+
+test('marks tokens as valid for a successful verification preview', () => {
+  const validation = EquationParser.validateEdit('y = x', 'y = x + 2');
+  const tokens = EquationParser.annotateTokens('y = x + 2', [], 'valid', validation.changes);
+  assert.deepEqual(tokens.filter(token => token.valid).map(token => token.value), ['+', 2]);
+  assert.ok(tokens.filter(token => !token.valid).length > 0);
+});

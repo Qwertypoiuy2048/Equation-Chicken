@@ -20,6 +20,7 @@ test('the turn page binds its displayed equation to shared state', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
   assert.match(html, /id="equation-editor"/);
+  assert.match(html, /id="equation-preview"/);
   assert.match(browserScript, /editor\.value = state\.equation/);
   assert.match(html, /data-equation-history/);
   assert.match(browserScript, /setText\('\[data-equation-history\]', state\.history\.join/);
@@ -35,6 +36,14 @@ test('the turn page exposes verify and revert equation controls', () => {
   assert.match(browserScript, /EquationParser\.validateEdit\(state\.equation, candidate\)/);
   assert.match(browserScript, /Game\.updateEquation\(state, verifiedEquation\)/);
   assert.match(browserScript, /Game\.revertEquation\(state\)/);
+  assert.match(browserScript, /EquationParser\.annotateTokens/);
+  assert.match(browserScript, /validation\.changes/);
+});
+
+test('inline problem tokens have dedicated styling', () => {
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.match(css, /\.problem-token\s*\{/);
+  assert.match(css, /\.valid-token\s*\{/);
 });
 
 test('the result page contains final judgment choices', () => {
