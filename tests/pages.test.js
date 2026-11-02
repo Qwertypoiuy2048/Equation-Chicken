@@ -19,10 +19,22 @@ test('all primary pages load shared CSS, state, and browser scripts', () => {
 test('the turn page binds its displayed equation to shared state', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
-  assert.match(html, /data-equation/);
-  assert.match(browserScript, /setText\('\[data-equation\]', state\.equation\)/);
+  assert.match(html, /id="equation-editor"/);
+  assert.match(browserScript, /editor\.value = state\.equation/);
   assert.match(html, /data-equation-history/);
   assert.match(browserScript, /setText\('\[data-equation-history\]', state\.history\.join/);
+});
+
+test('the turn page exposes verify and revert equation controls', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+  assert.match(html, /id="equation-editor"/);
+  assert.match(html, /data-action="verify-equation"/);
+  assert.match(html, /data-action="accept-equation"/);
+  assert.match(html, /data-action="revert-equation"/);
+  assert.match(browserScript, /EquationParser\.tryCompile\(candidate\)/);
+  assert.match(browserScript, /Game\.updateEquation\(state, verifiedEquation\)/);
+  assert.match(browserScript, /Game\.revertEquation\(state\)/);
 });
 
 test('the result page contains final judgment choices', () => {

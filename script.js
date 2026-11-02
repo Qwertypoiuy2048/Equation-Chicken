@@ -2,6 +2,7 @@ const STORAGE_KEY = 'equation-chicken-state';
 const canvasControllers = new WeakMap();
 const Game = typeof EquationChicken === 'object' ? EquationChicken : null;
 const DEFAULT_STATE = Game ? Game.DEFAULT_STATE : {};
+let verifiedEquation = null;
 
 function loadState() {
   try {
@@ -33,7 +34,6 @@ function updateSharedText(state) {
   setText('[data-score-player="2"]', state.scores[2]);
   setText('[data-current-player-name]', playerName(state.currentPlayer));
   setText('[data-match-number]', state.match);
-  setText('[data-equation]', state.equation);
   setText('[data-equation-history]', state.history.join(' → '));
   setText('[data-winner-name]', playerName(state.winner || state.currentPlayer));
   setText('[data-next-player-name]', playerName(state.nextStartingPlayer));
@@ -199,8 +199,11 @@ function renderFinalJudgmentGraph(state) {
 
 function renderTurnPage(state) {
   updateSharedText(state);
-  const challengeLink = document.querySelector('[data-action="start-challenge"]');
-  if (challengeLink) challengeLink.textContent = `Challenge ${playerName(otherPlayer(state.currentPlayer))}`;
+  const editor = document.querySelector('#equation-editor');
+  const accept = document.querySelector('[data-action="accept-equation"]');
+  if (editor) editor.value = state.equation;
+  if (accept) accept.disabled = true;
+  verifiedEquation = null;
 }
 
 function renderChallengePage(state) {
@@ -255,6 +258,54 @@ document.addEventListener('click', event => {
     event.preventDefault();
     startChallenge(state);
     navigate('challenge.html');
+    return;
+  }
+
+  if (target.dataset.action === 'verify-equation') {
+    const editor = document.querySelector('#equation-editor');
+    const message = document.querySelector('#equation-message');
+    const candidate = editor.value.trim();
+    if (!candidate || !EquationParser.tryCompile(candidate)) {
+      verifiedEquation = null;
+      document.querySelector('[data-action="accept-equation"]').disabled = true;
+      message.textContent = 'Enter a valid graphable equation, such as y = x or y = x^2.';
+      message.classList.add('error');
+      return;
+    }
+    verifiedEquation = candidate;
+    document.querySelector('[data-action="accept-equation"]').disabled = false;
+    message.textContent = 'Equation verified. Accept it to save the change.';
+    message.classList.remove('error');
+    return;
+  }
+
+  if (target.dataset.action === 'accept-equation') {
+    const editor = document.querySelector('#equation-editor');
+    const message = document.querySelector('#equation-message');
+    if (!verifiedEquation || verifiedEquation !== editor.value.trim()) {
+      message.textContent = 'Verify this equation before accepting it.';
+      message.classList.add('error');
+      return;
+    }
+    Game.updateEquation(state, verifiedEquation);
+    saveState(state);
+    target.disabled = true;
+    verifiedEquation = null;
+    message.textContent = 'Equation accepted and saved.';
+    message.classList.remove('error');
+    return;
+  }
+
+  if (target.dataset.action === 'revert-equation') {
+    const editor = document.querySelector('#equation-editor');
+    const message = document.querySelector('#equation-message');
+    Game.revertEquation(state);
+    saveState(state);
+    editor.value = state.equation;
+    document.querySelector('[data-action="accept-equation"]').disabled = true;
+    verifiedEquation = null;
+    message.textContent = 'Equation reverted to the start of the turn.';
+    message.classList.remove('error');
     return;
   }
 

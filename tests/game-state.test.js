@@ -17,6 +17,35 @@ test('accepts a custom equation in shared state', () => {
   assert.equal(state.equation, 'y = x^2');
 });
 
+test('updating the equation also appends equation history', () => {
+  const state = Game.createState();
+  Game.updateEquation(state, 'y = x^2');
+  assert.equal(state.equation, 'y = x^2');
+  assert.deepEqual(state.history, ['y = x', 'y = x^2']);
+});
+
+test('updating with the same equation does not duplicate history', () => {
+  const state = Game.createState();
+  Game.updateEquation(state, 'y = x');
+  assert.deepEqual(state.history, ['y = x']);
+});
+
+test('revert restores the equation and history from the start of the turn', () => {
+  const state = Game.createState();
+  Game.updateEquation(state, 'y = x^2');
+  Game.revertEquation(state);
+  assert.equal(state.equation, 'y = x');
+  assert.deepEqual(state.history, ['y = x']);
+});
+
+test('accepting an edit does not move the turn-start snapshot', () => {
+  const state = Game.createState();
+  Game.updateEquation(state, 'y = 2x');
+  assert.equal(state.turnStartEquation, 'y = x');
+  Game.revertEquation(state);
+  assert.equal(state.equation, 'y = x');
+});
+
 test('challenge transitions preserve the shared equation', () => {
   const state = Game.startChallenge(Game.createState({ equation: 'y = 2x^2 + 3' }));
   assert.equal(state.equation, 'y = 2x^2 + 3');

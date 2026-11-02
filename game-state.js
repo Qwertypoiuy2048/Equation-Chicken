@@ -8,6 +8,8 @@
     currentPlayer: 1,
     equation: 'y = x',
     history: ['y = x'],
+    turnStartEquation: 'y = x',
+    turnStartHistory: ['y = x'],
     scores: { 1: 0, 2: 0 },
     phase: 'turn',
     challenger: null,
@@ -22,11 +24,16 @@
   };
 
   function createState(overrides = {}) {
+    const equation = overrides.equation || DEFAULT_STATE.equation;
+    const history = [...(overrides.history || [equation])];
     return {
       ...DEFAULT_STATE,
       ...overrides,
+      equation,
+      history,
+      turnStartEquation: overrides.turnStartEquation || equation,
+      turnStartHistory: [...(overrides.turnStartHistory || history)],
       scores: { ...DEFAULT_STATE.scores, ...(overrides.scores || {}) },
-      history: [...(overrides.history || DEFAULT_STATE.history)],
       drawings: (overrides.drawings || DEFAULT_STATE.drawings).map(stroke => ({
         player: stroke.player,
         color: stroke.color,
@@ -77,6 +84,20 @@
     return state;
   }
 
+  function updateEquation(state, equation) {
+    if (state.equation !== equation) {
+      state.equation = equation;
+      state.history = [...state.history, equation];
+    }
+    return state;
+  }
+
+  function revertEquation(state) {
+    state.equation = state.turnStartEquation;
+    state.history = [...state.turnStartHistory];
+    return state;
+  }
+
   function finishMatch(state, winner, result) {
     state.winner = winner;
     state.scores[winner] += 1;
@@ -123,6 +144,8 @@
     rejectDrawing,
     acceptDrawing,
     counterChallenge,
+    updateEquation,
+    revertEquation,
     finishMatch,
     resolveDraw,
     nextMatch,

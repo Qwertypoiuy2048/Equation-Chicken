@@ -13,6 +13,8 @@ npm test
 
 It currently covers the game-state transitions, scoring/reset behavior, required page assets and controls, and the shared browser-script contract.
 
+Equation editing also has separate coverage for verify-without-save, accept-and-history, and revert-to-turn-start behavior.
+
 ## Recommended framework
 
 Use **Vitest** for the game engine, tokenizer/parser, equation alterations, scoring, and reset logic. Add **Playwright** once the first playable browser build exists for a small number of end-to-end smoke tests.
