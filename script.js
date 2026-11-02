@@ -21,6 +21,15 @@ function playerName(player) {
   return `Player ${player}`;
 }
 
+function equationExpression(equation) {
+  const match = equation.match(/^\s*y\s*=\s*(.*)$/i);
+  return match ? match[1] : equation;
+}
+
+function makeEquation(expression) {
+  return expression ? `y = ${expression}` : '';
+}
+
 function otherPlayer(player) {
   return Game.otherPlayer(player);
 }
@@ -203,7 +212,7 @@ function renderTurnPage(state) {
   setTurnEditing(false);
   const editor = document.querySelector('#equation-editor');
   const accept = document.querySelector('[data-action="accept-equation"]');
-  if (editor) editor.value = state.equation;
+  if (editor) editor.value = equationExpression(state.equation);
   if (accept) accept.disabled = true;
   verifiedEquation = null;
   renderEquationPreview(state.equation);
@@ -288,7 +297,7 @@ document.addEventListener('click', event => {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
     setTurnEditing(true);
-    editor.value = state.equation;
+    editor.value = equationExpression(state.equation);
     message.textContent = '';
     message.classList.remove('error');
     renderEquationPreview(state.equation);
@@ -299,7 +308,7 @@ document.addEventListener('click', event => {
   if (target.dataset.action === 'verify-equation') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
-    const candidate = editor.value.trim();
+    const candidate = makeEquation(editor.value.trim());
     const validation = candidate ? EquationParser.validateEdit(state.equation, candidate) : { valid: false, reason: 'Enter an equation before verifying.' };
     if (!validation.valid) {
       verifiedEquation = null;
@@ -320,7 +329,7 @@ document.addEventListener('click', event => {
   if (target.dataset.action === 'accept-equation') {
     const editor = document.querySelector('#equation-editor');
     const message = document.querySelector('#equation-message');
-    if (!verifiedEquation || verifiedEquation !== editor.value.trim()) {
+    if (!verifiedEquation || verifiedEquation !== makeEquation(editor.value.trim())) {
       message.textContent = 'Verify this equation before accepting it.';
       message.classList.add('error');
       return;
@@ -337,7 +346,7 @@ document.addEventListener('click', event => {
     const message = document.querySelector('#equation-message');
     Game.revertEquation(state);
     saveState(state);
-    editor.value = state.equation;
+    editor.value = equationExpression(state.equation);
     document.querySelector('[data-action="accept-equation"]').disabled = true;
     verifiedEquation = null;
     message.textContent = 'Equation reverted to the start of the turn.';
@@ -414,7 +423,7 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('input', event => {
-  if (event.target.id === 'equation-editor') renderEquationPreview(event.target.value);
+  if (event.target.id === 'equation-editor') renderEquationPreview(makeEquation(event.target.value));
 });
 
 const state = loadState();

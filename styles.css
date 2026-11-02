@@ -200,6 +200,26 @@ main {
     font: 500 24px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.equation-input-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.equation-prefix {
+    display: grid;
+    place-items: center;
+    padding: 14px 0 14px 16px;
+    color: var(--muted);
+    font: 500 24px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    width: 60px;
+}
+
+.equation-input-wrap .equation-editor {
+    border: 0;
+}
+
 .equation-editor:focus-visible {
     outline: 3px solid #8db7e1;
     outline-offset: 2px;

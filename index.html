@@ -38,7 +38,7 @@
         <div class="equation" aria-label="Current equation" data-equation>y = x</div>
         <section id="edit-actions" class="equation-editor-panel" hidden>
           <label class="equation-editor-label" for="equation-editor">Edit equation</label>
-          <input id="equation-editor" class="equation-editor" type="text" value="y = x" aria-describedby="equation-message" autocomplete="off">
+          <div class="equation-input-wrap"><span class="equation-prefix" aria-hidden="true">y =</span><input id="equation-editor" class="equation-editor" type="text" value="x" aria-label="Right side of equation" aria-describedby="equation-message" autocomplete="off"></div>
           <div id="equation-preview" class="equation-preview" aria-label="Equation token preview"></div>
           <p id="equation-message" class="equation-message" role="status" aria-live="polite"></p>
           <div class="actions"><button class="action primary" type="button" data-action="verify-equation">Verify</button><button class="action" type="button" data-action="accept-equation" disabled>Accept</button><button class="action" type="button" data-action="revert-equation">Revert</button></div>

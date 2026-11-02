@@ -119,6 +119,8 @@ When both players have drawn, the final result page can award the point to Playe
 
 The final judgment view displays both player drawings alongside the computer-generated reference graph for comparison.
 
+For now, equation editing keeps the left side fixed as `y =` and only allows editing the right-hand expression. Supporting editable left-hand variables and relations is a future enhancement.
+
 The computer graph is a reference tool. It should remain hidden until the current player has finished drawing so that the player must graph the equation independently.
 
 ## Scoring and reset

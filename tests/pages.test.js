@@ -20,8 +20,10 @@ test('the turn page binds its displayed equation to shared state', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const browserScript = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
   assert.match(html, /id="equation-editor"/);
+  assert.match(html, /class="equation-prefix"[^>]*>y =</);
+  assert.match(html, /aria-label="Right side of equation"/);
   assert.match(html, /id="equation-preview"/);
-  assert.match(browserScript, /editor\.value = state\.equation/);
+  assert.match(browserScript, /editor\.value = equationExpression\(state\.equation\)/);
   assert.match(html, /data-equation-history/);
   assert.match(browserScript, /setText\('\[data-equation-history\]', state\.history\.join/);
 });
@@ -40,6 +42,8 @@ test('the turn page exposes verify and revert equation controls', () => {
   assert.match(browserScript, /Game\.acceptTurnEquation\(state, verifiedEquation\)/);
   assert.match(browserScript, /navigate\('index\.html'\)/);
   assert.match(browserScript, /Game\.revertEquation\(state\)/);
+  assert.match(browserScript, /function equationExpression\(equation\)/);
+  assert.match(browserScript, /function makeEquation\(expression\)/);
   assert.match(browserScript, /EquationParser\.annotateTokens/);
   assert.match(browserScript, /validation\.changes/);
 });
