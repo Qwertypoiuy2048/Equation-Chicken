@@ -154,7 +154,12 @@
         }
         activeStroke = { player: options.activePlayer, color, tool: options.tool, coordinateSpace, points: options.tool === 'line' ? [point, point] : [point] };
       };
-      p.mouseDragged = () => { if (activeStroke && activeStroke.tool === 'freehand') activeStroke.points.push({ x: p.mouseX, y: p.mouseY }); else if (activeStroke && activeStroke.tool === 'line') activeStroke.points[1] = { x: p.mouseX, y: p.mouseY }; };
+      p.mouseDragged = () => {
+        if (!activeStroke) return;
+        const point = pixelToGraph({ x: p.mouseX, y: p.mouseY });
+        if (activeStroke.tool === 'freehand') activeStroke.points.push(point);
+        else if (activeStroke.tool === 'line') activeStroke.points[1] = point;
+      };
       p.mouseReleased = () => { if (activeStroke) { options.onStroke?.(activeStroke); activeStroke = null; } };
       p.windowResized = () => { const { width, height } = size(); p.resizeCanvas(width, height); };
     });

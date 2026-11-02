@@ -152,6 +152,7 @@ test('reference graph is generated from the equation by the shared p5 sketch', (
   assert.match(graphSketch, /squareGridStep/);
   assert.match(graphSketch, /tickValues/);
   assert.match(graphSketch, /pixelToGraph/);
+  assert.match(graphSketch, /const point = pixelToGraph\(\{ x: p\.mouseX, y: p\.mouseY \}\)/);
   assert.match(browserScript, /Each minimum must be smaller than its maximum/);
   assert.match(graphSketch, /plotStroke = null; sketch\.redraw\(\)/);
   assert.match(browserScript, /state\.drawings\.splice\(0, state\.drawings\.length/);
