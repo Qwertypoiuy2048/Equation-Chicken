@@ -79,10 +79,14 @@ test('the result page contains final judgment choices', () => {
 
 test('the challenge page contains the drawing and challenge controls', () => {
   const html = fs.readFileSync(path.join(root, 'challenge.html'), 'utf8');
-  for (const action of ['clear-drawing', 'submit-drawing', 'accept-drawing', 'reject-drawing', 'accept-loss', 'counter-challenge', 'forfeit']) {
+  for (const action of ['undo-drawing', 'clear-drawing', 'submit-drawing', 'accept-drawing', 'reject-drawing', 'accept-loss', 'counter-challenge', 'forfeit']) {
     assert.match(html, new RegExp(`data-action="${action}"`));
   }
   assert.match(html, /id="graph-sketch"/);
+  assert.match(html, /data-tool="freehand"/);
+  assert.match(html, /data-tool="point"/);
+  assert.match(html, /data-tool="line"/);
+  assert.match(html, /data-tool="plotter"/);
   assert.match(html, /id="scratch-equation"/);
   assert.match(html, /Scratchpad only/);
 });
@@ -93,6 +97,7 @@ test('browser script contains the shared state and interaction entry points', ()
   assert.match(browserScript, /renderChallengePage/);
   assert.match(browserScript, /finishMatch/);
   assert.match(browserScript, /data-action/);
+  assert.match(browserScript, /closest\('\[data-action\], \[data-tool\]'\)/);
 });
 
 test('shared CSS keeps hidden challenge sections hidden', () => {
@@ -122,4 +127,8 @@ test('reference graph is generated from the equation by the shared p5 sketch', (
   assert.match(browserScript, /referenceVisible: true/);
   assert.match(graphSketch, /EquationParser\.tryCompile\(options\.equation\)/);
   assert.match(graphSketch, /graph\.evaluate\(graphX\)/);
+  assert.match(graphSketch, /stroke\.tool === 'point'/);
+  assert.match(graphSketch, /stroke\.tool === 'line'/);
+  assert.match(graphSketch, /options\.tool === 'plotter'/);
+  assert.match(browserScript, /undoCurrent\(\)/);
 });

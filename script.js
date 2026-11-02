@@ -2,6 +2,7 @@ const STORAGE_KEY = 'equation-chicken-state';
 const canvasControllers = new WeakMap();
 let challengeGraphSketch = null;
 let finalGraphSketch = null;
+let activeDrawingTool = 'freehand';
 const Game = typeof EquationChicken === 'object' ? EquationChicken : null;
 const DEFAULT_STATE = Game ? Game.DEFAULT_STATE : {};
 let verifiedEquation = null;
@@ -261,11 +262,41 @@ function renderChallengePage(state) {
     if (!challengeGraphSketch) {
       challengeGraphSketch = EquationGraph.createGraphSketch(graphHost, {
         mode: 'drawing',
-        onStroke(stroke) { state.drawings.push(stroke); saveState(state); },
-        onClear(player) { state.drawings = state.drawings.filter(stroke => stroke.player !== player); saveState(state); }
+        onStroke(stroke) {
+          if (stroke.tool !== 'plotter' || state.drawings[state.drawings.length - 1] !== stroke) state.drawings.push(stroke);
+          saveState(state);
+        },
+        onClear(player) { state.drawings = state.drawings.filter(stroke => stroke.player !== player); saveState(state); },
+        onUndo(player) {
+          const index = state.drawings.map(stroke => stroke.player).lastIndexOf(player);
+          if (index >= 0) state.drawings.splice(index, 1);
+          saveState(state);
+        }
       });
     }
-    challengeGraphSketch.update({ equation: state.equation, drawings: state.drawings, activePlayer: drawer, challengedPlayer: state.challengedPlayer, frozen: ui.frozen, referenceVisible: ui.referenceVisible, mode: 'drawing' });
+    challengeGraphSketch.update({
+      equation: state.equation,
+      drawings: state.drawings,
+      activePlayer: drawer,
+      challengedPlayer: state.challengedPlayer,
+      frozen: ui.frozen,
+      referenceVisible: ui.referenceVisible,
+      mode: 'drawing',
+      tool: activeDrawingTool,
+      onStroke(stroke) {
+        if (stroke.tool !== 'plotter' || state.drawings[state.drawings.length - 1] !== stroke) state.drawings.push(stroke);
+        saveState(state);
+      },
+      onClear(player) {
+        state.drawings = state.drawings.filter(stroke => stroke.player !== player);
+        saveState(state);
+      },
+      onUndo(player) {
+        const index = state.drawings.map(stroke => stroke.player).lastIndexOf(player);
+        if (index >= 0) state.drawings.splice(index, 1);
+        saveState(state);
+      }
+    });
   }
   updateSharedText(state);
   title.innerHTML = `${playerName(drawer)} must graph: <code>${state.equation}</code>`;
@@ -275,6 +306,11 @@ function renderChallengePage(state) {
   judgeActions.hidden = !ui.judgeActions;
   rejectActions.hidden = !ui.rejectActions;
   acceptedActions.hidden = !ui.acceptedActions;
+  document.querySelectorAll('[data-tool]').forEach(button => {
+    const selected = button.dataset.tool === activeDrawingTool;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   if (ui.frozen) {
     board.classList.add('is-frozen');
     frozenLabel.hidden = false;
@@ -287,7 +323,7 @@ function renderChallengePage(state) {
 }
 
 document.addEventListener('click', event => {
-  const target = event.target.closest('[data-action]');
+  const target = event.target.closest('[data-action], [data-tool]');
   if (!target) return;
   const state = loadState();
 
@@ -295,6 +331,17 @@ document.addEventListener('click', event => {
     event.preventDefault();
     startChallenge(state);
     navigate('challenge.html');
+    return;
+  }
+
+  if (target.dataset.tool) {
+    activeDrawingTool = target.dataset.tool;
+    if (challengeGraphSketch) challengeGraphSketch.update({ tool: activeDrawingTool });
+    document.querySelectorAll('[data-tool]').forEach(button => {
+      const selected = button.dataset.tool === activeDrawingTool;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
     return;
   }
 
@@ -395,6 +442,7 @@ document.addEventListener('click', event => {
   }
 
   if (target.dataset.action === 'clear-drawing' && challengeGraphSketch) challengeGraphSketch.clearCurrent();
+  if (target.dataset.action === 'undo-drawing' && challengeGraphSketch) challengeGraphSketch.undoCurrent();
 
   if (target.dataset.action === 'submit-drawing') {
     Game.submitDrawing(state);

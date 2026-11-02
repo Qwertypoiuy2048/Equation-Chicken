@@ -296,6 +296,25 @@ main {
     justify-content: center;
 }
 
+.drawing-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 8px;
+}
+
+.tool-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.tool-button.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
 .history {
     color: var(--muted);
     margin-top: 24px;

@@ -45,6 +45,14 @@
         <div class="graph-footer">
           <span id="graph-hint" class="hint">Reference graph is hidden until judgment.</span>
           <div id="draw-actions" class="actions">
+            <div class="drawing-tools" role="toolbar" aria-label="Drawing tools">
+              <span class="tool-label">Tool</span>
+              <button class="action tool-button active" type="button" data-tool="freehand" aria-pressed="true">Draw</button>
+              <button class="action tool-button" type="button" data-tool="point" aria-pressed="false">Point</button>
+              <button class="action tool-button" type="button" data-tool="line" aria-pressed="false">Line</button>
+              <button class="action tool-button" type="button" data-tool="plotter" aria-pressed="false">Plotter</button>
+            </div>
+            <button class="action" type="button" data-action="undo-drawing">Undo</button>
             <button class="action" type="button" data-action="clear-drawing">Clear</button>
             <button class="action primary" type="button" data-action="submit-drawing">Submit drawing</button>
             <button class="action" type="button" data-action="forfeit">Forfeit</button>
