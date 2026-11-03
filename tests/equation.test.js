@@ -123,10 +123,39 @@ test('allows adding one operator and one atom together', () => {
   assert.equal(EquationParser.validateEdit('y = x', 'y = x+2').kind, 'operator-and-atom');
   assert.equal(EquationParser.validateEdit('y = x', 'y = 2*x').kind, 'operator-and-atom');
   assert.equal(EquationParser.validateEdit('y = x', 'y = x^2').kind, 'operator-and-atom');
+  assert.equal(EquationParser.validateEdit('y = x', 'y = x%2').kind, 'operator-and-atom');
+  assert.equal(EquationParser.validateEdit('y = x', 'y = x//2').kind, 'operator-and-atom');
 });
 
 test('allows adding one opening and one closing parenthesis together', () => {
   assert.equal(EquationParser.validateEdit('y = x', 'y = (x)').kind, 'parenthesis-pair');
+});
+
+test('treats function wrappers and absolute-value bars as one edit', () => {
+  for (const candidate of ['y = abs(2x)', 'y = |2x|', 'y = sqrt(2x)']) {
+    const validation = EquationParser.validateEdit('y = 2x', candidate);
+    assert.equal(validation.valid, true);
+    assert.equal(validation.kind, 'grouped-function');
+    assert.equal(validation.edits, 1);
+  }
+});
+
+test('highlights only the outer grouped wrapper tokens', () => {
+  const candidate = 'y = sin(abs(sqrt(|x|))(1))';
+  const validation = EquationParser.validateEdit('y = abs(sqrt(|x|))(1)', candidate);
+  const tokens = EquationParser.annotateTokens(candidate, [], 'valid', validation.changes);
+  assert.deepEqual(tokens.filter(token => token.valid).map(token => token.value), ['sin', '(', ')']);
+});
+
+test('treats a grouped function inserted inside an expression as one edit', () => {
+  const current = 'y = sin(abs(sqrt(|x|))(1))';
+  const candidate = 'y = sin(abs(tan(sqrt(|x|)))(1))';
+  const validation = EquationParser.validateEdit(current, candidate);
+  assert.equal(validation.valid, true);
+  assert.equal(validation.kind, 'grouped-function');
+  assert.equal(validation.edits, 1);
+  const tokens = EquationParser.annotateTokens(candidate, [], 'valid', validation.changes);
+  assert.deepEqual(tokens.filter(token => token.valid).map(token => token.value), ['tan', '(', ')']);
 });
 
 test('allows repositioning one existing parenthesis pair as its own option', () => {
@@ -138,7 +167,7 @@ test('allows repositioning one existing parenthesis pair as its own option', () 
 test('rejects unsupported compound additions', () => {
   assert.equal(EquationParser.validateEdit('y = x', 'y = 2x + 3').valid, false);
   assert.equal(EquationParser.validateEdit('y = x', 'y = ((x))').valid, false);
-  assert.equal(EquationParser.validateEdit('y = x', 'y = abs(x)').valid, false);
+  assert.equal(EquationParser.validateEdit('y = x', 'y = abs(x + 1)').valid, false);
 });
 
 test('tracks token issues for rejected edits', () => {

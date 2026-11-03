@@ -238,6 +238,35 @@
     return differences;
   }
 
+  function groupedFunctionInsertion(current, candidate) {
+    for (let start = 0; start < candidate.length; start += 1) {
+      if (candidate[start].type === 'function' && FUNCTIONS.includes(candidate[start].value) && candidate[start + 1]?.type === '(') {
+      let depth = 0;
+        for (let index = start + 1; index < candidate.length; index += 1) {
+          if (candidate[index].type === '(') depth += 1;
+          if (candidate[index].type === ')') {
+          depth -= 1;
+            if (depth === 0) {
+              const remaining = candidate.filter((_, tokenIndex) => ![start, start + 1, index].includes(tokenIndex));
+              if (sameTokens(current, remaining)) return { function: candidate[start].value, changes: [start, start + 1, index] };
+              break;
+            }
+          }
+        }
+      }
+      if (candidate[start].type === '|') {
+        for (let index = start + 1; index < candidate.length; index += 1) {
+          if (candidate[index].type === '|') {
+            const remaining = candidate.filter((_, tokenIndex) => ![start, index].includes(tokenIndex));
+            if (sameTokens(current, remaining)) return { function: 'abs', changes: [start, index] };
+            break;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   function validateEdit(currentEquation, candidateEquation) {
     let current;
     let candidate;
@@ -252,13 +281,18 @@
     const relationCount = candidate.filter(token => token.type === 'relation').length;
     if (relationCount !== 1) return { valid: false, issues: [{ kind: 'relation-count', count: relationCount }], reason: 'An equation must contain exactly one relation.' };
 
+    const groupedFunction = groupedFunctionInsertion(current, candidate);
+    if (groupedFunction) {
+      return { valid: true, edits: 1, kind: 'grouped-function', function: groupedFunction.function, issues: [], changes: groupedFunction.changes };
+    }
+
     if (canRepositionParentheses(current, candidate)) return { valid: true, edits: 2, kind: 'parenthesis-reposition', issues: [], changes: candidate.map((token, index) => token.type === '(' || token.type === ')' ? index : -1).filter(index => index >= 0) };
 
     const edits = countTokenEdits(current, candidate);
     if (edits === 1) return { valid: true, edits, kind: 'single-token', issues: [], changes: candidateChangeIndexes(current, candidate) };
 
     const operatorAndAtom = canAddPair(current, candidate, added => {
-      const operators = added.filter(token => ['+', '-', '*', '/', '^'].includes(token.type));
+      const operators = added.filter(token => ['+', '-', '*', '/', '//', '%', '^'].includes(token.type));
       const atoms = added.filter(token => ['number', 'constant', 'variable'].includes(token.type));
       return operators.length === 1 && atoms.length === 1;
     });
@@ -273,7 +307,7 @@
       valid: false,
       edits,
       issues: describeDifferences(current, candidate),
-      reason: 'Only one token, one operator plus one atom, one matching parenthesis pair, or one parenthesis reposition may be added.'
+      reason: 'Only one token, one grouped function wrapper, one operator plus one atom, one matching parenthesis pair, or one parenthesis reposition may be added.'
     };
   }
 

@@ -42,6 +42,8 @@ The equation must remain valid after every alteration. A legal alteration may:
 
 Characters and additions may be placed anywhere as long as the resulting expression is valid and graphable.
 
+Wrapping the existing expression in one grouped function, such as changing `y = 2x` to `y = abs(2x)` or `y = |2x|`, counts as one legal edit.
+
 Examples:
 
 ```text
