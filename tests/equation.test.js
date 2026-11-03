@@ -55,11 +55,48 @@ test('supports constants with implicit multiplication and parentheses', () => {
   assert.equal(graph.evaluate(1), 2 * Math.PI);
 });
 
+test('supports grouped math functions', () => {
+  const cases = [
+    ['ln(x)', 4, Math.log(4)],
+    ['sqrt(x)', 9, 3],
+    ['sin(x)', 1, Math.sin(1)],
+    ['cos(x)', 1, Math.cos(1)],
+    ['tan(x)', 1, Math.tan(1)],
+    ['ceil(x)', 1.2, 2],
+    ['floor(x)', 1.8, 1],
+    ['abs(x)', -4, 4]
+  ];
+  for (const [functionName, input, expected] of cases) {
+    const graph = EquationParser.compile(`y = ${functionName}`);
+    assert.ok(Math.abs(graph.evaluate(input) - expected) < 1e-10);
+  }
+});
+
+test('supports absolute-value bars, remainder, and integer division', () => {
+  assert.equal(EquationParser.compile('y = |x - 5|').evaluate(2), 3);
+  assert.equal(EquationParser.compile('y = 17 % 5').evaluate(0), 2);
+  assert.equal(EquationParser.compile('y = 17 // 5').evaluate(0), 3);
+  assert.equal(EquationParser.compile('y = -17 // 5').evaluate(0), -3);
+  assert.equal(EquationParser.compile('y = 2 + 17 % 5').evaluate(0), 4);
+});
+
+test('tokenizes integer division as one operator', () => {
+  assert.deepEqual(
+    EquationParser.tokenize('17 // 5').map(token => token.value),
+    [17, '//', 5, null]
+  );
+});
+
+test('tokenizes grouped functions as named tokens', () => {
+  assert.deepEqual(
+    EquationParser.tokenize('sqrt(x)+ln(x)').map(token => token.value),
+    ['sqrt', '(', 'x', ')', '+', 'ln', '(', 'x', ')', null]
+  );
+});
+
 test('rejects equations outside the current function-graph scope', () => {
   assert.equal(EquationParser.tryCompile('x = y'), null);
-  assert.equal(EquationParser.tryCompile('y = sin(x)'), null);
   assert.equal(EquationParser.tryCompile('y = x +'), null);
-  assert.equal(EquationParser.tryCompile('y = abs(x)'), null);
 });
 
 test('counts one-token replacements, additions, and deletions', () => {

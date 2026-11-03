@@ -56,11 +56,13 @@ The first version supports:
 
 - variables: `x`, `y`;
 - digits: `0` through `9`;
-- operators: `+`, `-`, `*`, `/`, `^`;
+- operators: `+`, `-`, `*`, `/`, `//`, `%`, `^`;
 - relations: `=`, `<`, `>`, `<=`, `>=`;
 - constants: `π` and `e`;
 - parentheses;
-- absolute value notation such as `abs(x)`.
+- grouped functions: `abs()`, `ln()`, `sqrt()`, `sin()`, `cos()`, `tan()`, `ceil()`, and `floor()`.
+
+Absolute value may also use bars, such as `|x - 3|`. `%` is remainder, and `//` is integer division truncated toward zero.
 
 Other variables, such as `r` or `Θ`, may be added later.
 
@@ -270,7 +272,7 @@ The current version includes the three-page turn/challenge/result flow, shared e
 ## Future ideas
 
 - Additional variables such as `r` and `Θ`.
-- More functions, including square root, exponential, logarithmic, and trigonometric functions.
+- Additional mathematical functions beyond the current grouped-function set.
 - Sound effects and arcade-style feedback.
 - A single player practice mode.
 - Accessibility settings for colors and line thickness.

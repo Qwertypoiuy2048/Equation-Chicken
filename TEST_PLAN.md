@@ -54,10 +54,11 @@ tests/
 
 ### Equation rules
 
-- `y = x`, `y = 2x + 3`, and `y = abs(x)` are accepted as graphable examples.
+- `y = x`, `y = 2x + 3`, `y = ln(x)`, `y = sqrt(x)`, `y = sin(x)`, `y = cos(x)`, `y = tan(x)`, `y = ceil(x)`, `y = floor(x)`, and `y = abs(x)` are accepted as graphable examples.
 - Relations may be tokenized, but the current compiler rejects graph forms outside `y = expression`.
 - Invalid syntax is rejected without changing state.
 - Implicit multiplication works for `2x`, `xy`, `3(x)`, and `(x)y`.
+- Absolute-value bars, `%` remainder, and `//` integer division evaluate correctly.
 - Grouped functions such as `abs()` are recognized by the parser.
 - Token removal and bans are future-feature coverage, not current V0.1 coverage.
 
