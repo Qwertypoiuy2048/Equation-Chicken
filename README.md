@@ -12,7 +12,7 @@ The equation begins as:
 y = x
 ```
 
-Players take turns changing the equation or challenging the other player. A challenge ends the current match and forces the challenged player to draw the graph using the p5.js drawing tool.
+Players take turns changing the equation, changing one graph boundary, or challenging the other player. A challenge ends the current match and forces the challenged player to draw the graph using the p5.js drawing tools.
 
 The overall game is made up of multiple matches. Each match awards at most one point, then the equation resets to `y = x`.
 
@@ -23,7 +23,8 @@ The overall game is made up of multiple matches. Each match awards at most one p
 On a turn, a player chooses exactly one action:
 
 1. **Alter the equation** with one legal change.
-2. **Challenge the other player.**
+2. **Alter graph bounds** by changing exactly one of x-min, x-max, y-min, or y-max.
+3. **Challenge the other player.**
 
 If the alteration produces a valid, graphable equation, the turn passes to the other player. A challenge may happen at any time, including immediately when the equation is `y = x`.
 
@@ -72,17 +73,17 @@ xy      means x * y
 (x)y    means (x) * y
 ```
 
-If an expression can be graphed, it is considered valid. This includes relations and regions, not only functions. Examples include:
+The tokenizer recognizes relations, but the current graph compiler only accepts functions written as `y = expression`. Editable left-hand variables, inequalities, and regions are future enhancements. Current graphable examples include:
 
 ```text
-y = y^2
-x < y
-y = x / x
+y = x
+y = 2x + 3
+y = abs(x)
 ```
 
-### Removing tokens
+### Token removal — future feature
 
-Each player has three removal actions available across the entire game.
+Token removal is planned but is not part of the current V0.1 implementation. The intended rules are:
 
 - A player may remove a token only when exactly one instance of that token appears in the current equation.
 - The removed token is banned for the remainder of the current match.
@@ -123,6 +124,12 @@ For now, equation editing keeps the left side fixed as `y =` and only allows edi
 
 The computer graph is a reference tool. It should remain hidden until the current player has finished drawing so that the player must graph the equation independently.
 
+### Graph bounds
+
+Each match carries a shared graph view with x-min, x-max, y-min, and y-max values. A bounds turn may change exactly one of those four values, and the new view is passed to the challenge and final comparison screens. Bounds must be numeric and each minimum must be less than its maximum.
+
+The graph automatically chooses readable tick spacing based on the visible range and keeps grid cells approximately square. The current version does not yet provide a fit-equation command.
+
 ## Scoring and reset
 
 - A match win awards one point.
@@ -140,11 +147,11 @@ The computer graph is a reference tool. It should remain hidden until the curren
 
 ## Wireframe
 
-The basic page prototype is split into [index.html](index.html), [challenge.html](challenge.html), and [result.html](result.html), with shared behavior in [script.js](script.js), equation parsing in [equation.js](equation.js), graph rendering and pointer input in [graph-sketch.js](graph-sketch.js), and shared styling in [styles.css](styles.css). The original interactive wireframe remains available in [wireframe.html](wireframe.html). The testing strategy and first test cases are tracked in [TEST_PLAN.md](TEST_PLAN.md).
+The V0.1 implementation is split into [index.html](index.html), [challenge.html](challenge.html), and [result.html](result.html), with shared behavior in [script.js](script.js), equation parsing in [equation.js](equation.js), graph rendering and pointer input in [graph-sketch.js](graph-sketch.js), and shared styling in [styles.css](styles.css). The original prototype remains available in [wireframe.html](wireframe.html). The testing strategy is tracked in [TEST_PLAN.md](TEST_PLAN.md).
 
 Run the automated checks with `npm test`.
 
-The first interface can be built from three primary screens, with judgment embedded in the graphing screen.
+The current interface uses three primary screens, with judgment embedded in the graphing screen.
 
 ### 1. Turn screen
 
@@ -165,7 +172,7 @@ The first interface can be built from three primary screens, with judgment embed
 └──────────────────────────────────────────────────────────────┘
 ```
 
-The turn screen should make the current player, equation, score, removals, banned tokens, and available actions obvious.
+The turn screen makes the current player, equation, score, graph bounds, equation history, and available actions obvious.
 
 ### 2. Graphing screen
 
@@ -236,10 +243,11 @@ The p5.js implementation can be divided into these responsibilities:
 - **Game state:** current player, match number, scores, removal counts, banned tokens, and screen state.
 - **Equation editor:** applies one proposed alteration and checks whether the result is legal.
 - **Tokenizer/parser:** recognizes numbers, variables, operators, relations, parentheses, constants, and grouped functions.
-- **Graph renderer:** displays the computer-generated graph or region for the current equation.
+- **Graph renderer:** displays the computer-generated function graph for the current equation.
+- **Drawing tools:** support freehand, point, straight-line, and connected plotter drawings, with Undo and Clear.
 - **Drawing canvas:** records the challenged player’s freehand graph.
 - **Challenge flow:** handles drawing, judgment, rejection, counter-challenge, and result states.
-- **Reset logic:** resets the equation and banned tokens while preserving scores and used removal actions.
+- **Reset logic:** resets the equation and graph bounds while preserving scores.
 
 A simple state flow is:
 
@@ -254,23 +262,19 @@ TURN
                                                         └── GRAPH DRAWING → RESULT
 ```
 
-## Initial implementation priorities
 
-1. Create the p5.js canvas and draw a coordinate grid.
-2. Store and display the current equation.
-3. Implement the turn and match state machine.
-4. Add a small equation validator.
-5. Add legal equation alterations.
-6. Add freehand graph drawing.
-7. Add the challenge and counter-challenge flow.
-8. Add computer-generated reference graphs.
-9. Add scoring, resets, and starting-player logic.
+## V0.1 status
+
+The current version includes the three-page turn/challenge/result flow, shared equation and graph-bound state, one-edit equation validation, one-boundary validation, p5.js graphing, multiple drawing tools, challenge judgment, counter-challenge, final comparison, scoring, and automated tests.
 
 ## Future ideas
 
 - Additional variables such as `r` and `Θ`.
 - More functions, including square root, exponential, logarithmic, and trigonometric functions.
 - Sound effects and arcade-style feedback.
-- A practice mode with no competitive scoring.
-- Accessibility settings for colors, line thickness, and reduced motion.
-- A replay or match-history view.
+- A single player practice mode.
+- Accessibility settings for colors and line thickness.
+- A match-history view.
+- A fit-equation view command for the reference graph, with safeguards for discontinuities and extreme values.
+- Token removal and bans.
+- Editable left-hand variables and relation/region graphing.

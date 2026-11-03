@@ -11,13 +11,13 @@ The initial automated suite is now available under `tests/` and runs with:
 npm test
 ```
 
-It currently covers the game-state transitions, scoring/reset behavior, required page assets and controls, and the shared browser-script/p5 sketch contract.
+It currently covers the game-state transitions, scoring/reset behavior, graph-bound state, required page assets and controls, and the shared browser-script/p5 sketch contract.
 
 Equation editing also has separate coverage for verify-without-save, accept-and-history, and revert-to-turn-start behavior.
 
 ## Recommended framework
 
-Use **Vitest** for the game engine, tokenizer/parser, equation alterations, scoring, and reset logic. Add **Playwright** once the first playable browser build exists for a small number of end-to-end smoke tests.
+The current suite uses Node’s built-in `node:test` runner. Add Playwright later for a small number of browser smoke tests; the existing source-level tests should remain fast and independent of canvas pixels.
 
 The p5.js sketch should be a thin rendering/input layer around a plain game-state module. That keeps most tests fast and avoids making the test suite depend on canvas pixels.
 
@@ -38,8 +38,10 @@ tests/
 
 ### Game state
 
-- A new game starts with `y = x`, Player 1 active, zero points, and three removals per player.
+- A new game starts with `y = x`, default bounds `-10…10` on both axes, Player 1 active, and zero points.
 - A legal alteration changes the equation and passes the turn to the other player.
+- A legal bounds alteration changes exactly one of the four boundary values and passes the turn to the other player.
+- A bounds alteration with zero or multiple changed values is rejected.
 - A challenge ends alteration turns and enters graphing for the challenged player.
 - A forfeit awards the point to the challenger and enters the result state.
 - Accepting a drawing awards the point to the drawer and reveals the reference graph.
@@ -52,19 +54,19 @@ tests/
 
 ### Equation rules
 
-- `y = x`, `y = 2x + 3`, `x < y`, and `abs(x) = y` are accepted as graphable examples.
+- `y = x`, `y = 2x + 3`, and `y = abs(x)` are accepted as graphable examples.
+- Relations may be tokenized, but the current compiler rejects graph forms outside `y = expression`.
 - Invalid syntax is rejected without changing state.
 - Implicit multiplication works for `2x`, `xy`, `3(x)`, and `(x)y`.
-- Grouped tokens such as `abs()` are treated as one removable token.
-- A removal is allowed only when exactly one matching token exists.
-- A removed token is unavailable for the rest of the match, then becomes available on reset.
+- Grouped functions such as `abs()` are recognized by the parser.
+- Token removal and bans are future-feature coverage, not current V0.1 coverage.
 
 ### Browser smoke tests
 
-- The turn screen exposes the equation, active player, score, removals, banned tokens, and two main actions.
+- The turn screen exposes the equation, active player, score, graph bounds, equation history, and three main actions.
 - Navigating between the three pages preserves the shared game state.
 - Challenge → graphing → submit → frozen judgment → result completes without a page reload.
-- Pointer input creates a drawing, Clear removes it, and Submit prevents further drawing.
+- Draw, Point, Line, and Plotter input create drawings; Undo and Clear remove drawings; Submit prevents further drawing.
 - The reference graph stays hidden during drawing and appears after the drawing is accepted.
 - Rejecting a drawing reveals accept-loss/counter-challenge options in place.
 - Counter-challenge returns to the same graphing screen with Player 1 as the drawer.
@@ -73,16 +75,9 @@ tests/
 - Both-failed leaves scores unchanged and selects the next starting player from the current score.
 - A completed result increments exactly one player's score, and Next match preserves scores while advancing the match and starting player.
 - Forfeit reaches the result screen.
-- The drawing canvas accepts pointer input, can be cleared, and can be submitted.
+- The p5 graph accepts pointer input, supports all four drawing tools, can undo/clear, and can be submitted.
 - The reference graph is not visible during the drawing phase.
 
-## Implementation order
+## V0.1 verification gaps
 
-1. Add a package manifest and choose the p5.js entry point.
-2. Extract a pure `GameState` model with explicit event transitions.
-3. Add Vitest and implement the game-state tests above.
-4. Implement tokenizer/validator behavior behind a small interface and test it independently.
-5. Connect the p5.js UI to the tested state model.
-6. Add Playwright smoke coverage for the challenge flow.
-
-The first useful milestone is not the full equation parser: it is a playable state machine using a small allowlist of known equations. That gives us a testable loop while the parser and graph renderer grow independently.
+The automated tests cover state transitions and page/source contracts. Browser-level Playwright coverage is still a future improvement, particularly for real pointer input, p5 rendering, resizing, and visual verification of tick labels.
