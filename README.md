@@ -2,7 +2,6 @@
 
 > A two-player graphing game where players alter an equation until one of them decides to challenge the other player to draw it.
 
-Equation Chicken is a Useful/Useless Hackathon project built with [p5.js](https://p5js.org/). It is useful because it practices graphing intuition and mathematical notation. It is useless because the main goal is to make the equation increasingly dangerous to graph before someone calls the other player's bluff.
 
 ## Core idea
 
@@ -12,7 +11,7 @@ The equation begins as:
 y = x
 ```
 
-Players take turns changing the equation, changing one graph boundary, or challenging the other player. A challenge ends the current match and forces the challenged player to draw the graph using the p5.js drawing tools.
+Players take turns changing the equation, changing one graph boundary, or challenging the other player. A challenge ends the current match and forces the challenged player to draw the graph.
 
 The overall game is made up of multiple matches. Each match awards at most one point, then the equation resets to `y = x`.
 
@@ -26,9 +25,7 @@ On a turn, a player chooses exactly one action:
 2. **Alter graph bounds** by changing exactly one of x-min, x-max, y-min, or y-max.
 3. **Challenge the other player.**
 
-If the alteration produces a valid, graphable equation, the turn passes to the other player. A challenge may happen at any time, including immediately when the equation is `y = x`.
-
-A challenge ends the alteration phase regardless of the outcome.
+If the alteration produces a valid, graphable equation, the turn passes to the other player. This continues until someone challenges, which ends the alteration phase.
 
 ### Altering the equation
 
@@ -39,11 +36,9 @@ The equation must remain valid after every alteration. A legal alteration may:
 - add a symbol together with one single-digit integer, such as `+3`;
 - add both opening and closing parentheses together;
 - add digits one at a time to create a multi-digit number.
+- add a grouped function like `abs(` or `sin(`
 
-Characters and additions may be placed anywhere as long as the resulting expression is valid and graphable.
-
-Wrapping the existing expression in one grouped function, such as changing `y = 2x` to `y = abs(2x)` or `y = |2x|`, counts as one legal edit.
-
+Alterations may be placed anywhere on the right side of the equation.
 Examples:
 
 ```text
@@ -77,7 +72,8 @@ xy      means x * y
 (x)y    means (x) * y
 ```
 
-The tokenizer recognizes relations, but the current graph compiler only accepts functions written as `y = expression`. Editable left-hand variables, inequalities, and regions are future enhancements. Current graphable examples include:
+The current graph compiler only accepts functions written as `y = expression`. 
+Current graphable examples include:
 
 ```text
 y = x
@@ -113,7 +109,7 @@ The challenge sequence is:
 2. Player B may draw the graph or forfeit.
 3. A forfeit immediately loses the match; Player A receives one point.
 4. If Player B draws, Player A judges the drawing.
-5. If Player A accepts the drawing, the computer-generated graph is revealed for comparison and Player B receives one point.
+5. If Player A accepts the drawing, the computer-generated graph is revealed for comparison, and Player B receives one point.
 6. If Player A rejects the drawing, Player B chooses either to accept the loss or counter-challenge.
 7. If Player B accepts the loss, Player A receives one point.
 8. If Player B counter-challenges, Player A must draw the same equation.
@@ -124,22 +120,17 @@ When both players have drawn, the final result page can award the point to Playe
 
 The final judgment view displays both player drawings alongside the computer-generated reference graph for comparison.
 
-For now, equation editing keeps the left side fixed as `y =` and only allows editing the right-hand expression. Supporting editable left-hand variables and relations is a future enhancement.
-
-The computer graph is a reference tool. It should remain hidden until the current player has finished drawing so that the player must graph the equation independently.
-
 ### Graph bounds
 
-Each match carries a shared graph view with x-min, x-max, y-min, and y-max values. A bounds turn may change exactly one of those four values, and the new view is passed to the challenge and final comparison screens. Bounds must be numeric and each minimum must be less than its maximum.
+Each match carries a shared graph view with x-min, x-max, y-min, and y-max values. A bounds turn may change exactly one of those four values.
 
-The graph automatically chooses readable tick spacing based on the visible range and keeps grid cells approximately square. The current version does not yet provide a fit-equation command.
+The graph automatically chooses readable tick spacing based on the visible range and keeps grid cells approximately square. 
 
 ## Scoring and reset
 
 - A match win awards one point.
-- A draw awards no points. A draw may be used for an unresolved or agreed-upon result if that rule is added later.
+- A draw awards no points.
 - After every match, the equation resets to `y = x`.
-- Banned tokens become available again after the reset.
 - Players retain their remaining removal actions.
 
 ### Starting player
@@ -152,93 +143,6 @@ The graph automatically chooses readable tick spacing based on the visible range
 ## Wireframe
 
 The V0.1 implementation is split into [index.html](index.html), [challenge.html](challenge.html), and [result.html](result.html), with shared behavior in [script.js](script.js), equation parsing in [equation.js](equation.js), graph rendering and pointer input in [graph-sketch.js](graph-sketch.js), and shared styling in [styles.css](styles.css). The original prototype remains available in [wireframe.html](wireframe.html). The testing strategy is tracked in [TEST_PLAN.md](TEST_PLAN.md).
-
-Run the automated checks with `npm test`.
-
-The current interface uses three primary screens, with judgment embedded in the graphing screen.
-
-### 1. Turn screen
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                       EQUATION CHICKEN                       │
-├──────────────────────────────────────────────────────────────┤
-│  Player 1's turn                         Match: 3             │
-│  Score: P1 2       Score: P2 1       Removals: P1 2 / P2 1   │
-│                                                              │
-│                         y = 2x + 3                           │
-│                                                              │
-│  Banned this match:  4, ^                                   │
-│                                                              │
-│  [ Alter Equation ]                 [ Challenge Player 2 ]   │
-│                                                              │
-│  Equation history: y = x → y = 2x → y = 2x + 3              │
-└──────────────────────────────────────────────────────────────┘
-```
-
-The turn screen makes the current player, equation, score, graph bounds, equation history, and available actions obvious.
-
-### 2. Graphing screen
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  Player 2 must graph:  y = 2x + 3                           │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│                 y                                             │
-│                 ▲          /                                  │
-│                 │        /                                    │
-│                 │      /                                      │
-│                 │    /                                        │
-│      ───────────┼──────────────► x                            │
-│                 │                                              │
-│                                                              │
-│  Draw on the graph. The reference graph is hidden.            │
-│                                                              │
-│  [ Clear ]                  [ Submit Drawing ]  [ Forfeit ]   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-The challenged player uses the mouse or touch input to draw directly on the p5.js graph canvas. There is no timer.
-
-### 3. Judgment state within the graphing screen
-
-After the drawing is submitted, the graphing area shrinks or freezes in place and the judgment controls appear below it. The reference graph remains hidden while Player 1 decides whether the drawing is good or bad.
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  Player 2 has submitted a graph.                             │
-│                                                              │
-│  [ Player 2's drawing is good ]   [ Player 2's drawing is bad ]│
-└──────────────────────────────────────────────────────────────┘
-```
-
-If the drawing is accepted, the reference graph appears and Player 2 receives the point.
-
-If the drawing is rejected:
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  Player 2 may accept the loss or counter-challenge.          │
-│                                                              │
-│  [ Accept Loss ]                         [ Counter-Challenge ] │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 4. Result screen
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                         MATCH RESULT                         │
-│                                                              │
-│                    Player 1 wins!                           │
-│                    Score: P1 3 — P2 1                       │
-│                                                              │
-│                    Next starting player: P2                 │
-│                                                              │
-│                         [ Next Match ]                       │
-└──────────────────────────────────────────────────────────────┘
-```
 
 ## Program structure
 
@@ -266,7 +170,6 @@ TURN
                                                         └── GRAPH DRAWING → RESULT
 ```
 
-
 ## V0.1 status
 
 The current version includes the three-page turn/challenge/result flow, shared equation and graph-bound state, one-edit equation validation, one-boundary validation, p5.js graphing, multiple drawing tools, challenge judgment, counter-challenge, final comparison, scoring, and automated tests.
@@ -275,10 +178,10 @@ The current version includes the three-page turn/challenge/result flow, shared e
 
 - Additional variables such as `r` and `Θ`.
 - Additional mathematical functions beyond the current grouped-function set.
-- Sound effects and arcade-style feedback.
+- Sound effects and arcade style feedback.
 - A single player practice mode.
 - Accessibility settings for colors and line thickness.
-- A match-history view.
+- A match history view.
 - A fit-equation view command for the reference graph, with safeguards for discontinuities and extreme values.
 - Token removal and bans.
-- Editable left-hand variables and relation/region graphing.
+- Editable left hand variables and relation/region graphing.
